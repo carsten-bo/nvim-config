@@ -96,18 +96,16 @@ return packer.startup(function(use)
   use { "rcarriga/nvim-dap-ui", commit = "d76d6594374fb54abf2d94d6a320f3fd6e9bb2f7" }
   use { "ravenxrz/DAPInstall.nvim", commit = "8798b4c36d33723e7bba6ed6e2c202f84bb300de" }
 
-  use { "rafi/awesome-vim-colorschemes"}
+  use { "rafi/awesome-vim-colorschemes" }
 
   use { "vim-test/vim-test" }
   use { "hashivim/vim-terraform" }
   use { "vim-scripts/ReplaceWithRegister" }
   use { "juliosueiras/vim-terraform-completion" }
-  use { "f-person/git-blame.nvim" }
+  use { "f-person/git-blame.nvim" } 
   use { "karb94/neoscroll.nvim" }
+  use { "folke/which-key.nvim" }
 
-  -- use { "folke/which-key.nvim" }
-
-  use { "max397574/which-key.nvim" }
   -- Automatically set up your configuration after cloning packer.nvim
   -- Put this at the end after all plugins
   if PACKER_BOOTSTRAP then
