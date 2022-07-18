@@ -1,5 +1,4 @@
 local fn = vim.fn
-
 -- Automatically install packer
 local install_path = fn.stdpath "data" .. "/site/pack/packer/start/packer.nvim"
 if fn.empty(fn.glob(install_path)) > 0 then
@@ -60,6 +59,7 @@ return packer.startup(function(use)
   -- Colorschemes
   use { "folke/tokyonight.nvim", commit = "8223c970677e4d88c9b6b6d81bda23daf11062bb" }
   use { "lunarvim/darkplus.nvim", commit = "2584cdeefc078351a79073322eb7f14d7fbb1835" }
+  use { "lunarvim/onedarker.nvim" }
 
   -- cmp plugins
   use { "hrsh7th/nvim-cmp", commit = "df6734aa018d6feb4d76ba6bda94b1aeac2b378a" } -- The completion plugin
@@ -96,6 +96,18 @@ return packer.startup(function(use)
   use { "rcarriga/nvim-dap-ui", commit = "d76d6594374fb54abf2d94d6a320f3fd6e9bb2f7" }
   use { "ravenxrz/DAPInstall.nvim", commit = "8798b4c36d33723e7bba6ed6e2c202f84bb300de" }
 
+  use { "rafi/awesome-vim-colorschemes"}
+
+  use { "vim-test/vim-test" }
+  use { "hashivim/vim-terraform" }
+  use { "vim-scripts/ReplaceWithRegister" }
+  use { "juliosueiras/vim-terraform-completion" }
+  use { "f-person/git-blame.nvim" }
+  use { "karb94/neoscroll.nvim" }
+
+  -- use { "folke/which-key.nvim" }
+
+  use { "max397574/which-key.nvim" }
   -- Automatically set up your configuration after cloning packer.nvim
   -- Put this at the end after all plugins
   if PACKER_BOOTSTRAP then

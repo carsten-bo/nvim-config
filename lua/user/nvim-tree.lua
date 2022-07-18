@@ -54,6 +54,7 @@ nvim_tree.setup {
     },
   },
   view = {
+    relativenumber = true,
     width = 30,
     height = 30,
     side = "left",
@@ -65,4 +66,5 @@ nvim_tree.setup {
       },
     },
   },
+
 }
