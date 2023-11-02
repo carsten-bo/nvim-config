@@ -56,6 +56,7 @@ typedef struct vimoption {
   /// cmdline. Only useful for string options.
   opt_expand_cb_T opt_expand_cb;
 
+  // TODO(famiu): Use OptVal for def_val.
   void *def_val;     ///< default values for variable (neovim!!)
   LastSet last_set;  ///< script in which the option was last set
 } vimoption_T;
@@ -72,6 +73,7 @@ enum {
 /// When OPT_GLOBAL and OPT_LOCAL are both missing, set both local and global
 /// values, get local value.
 typedef enum {
+  // TODO(famiu): See if `OPT_FREE` is really necessary and remove it if not.
   OPT_FREE      = 0x01,   ///< Free old value if it was allocated.
   OPT_GLOBAL    = 0x02,   ///< Use global value.
   OPT_LOCAL     = 0x04,   ///< Use local value.
@@ -91,15 +93,14 @@ enum {
   SOPT_GLOBAL = 0x08,  ///< Option has global value
   SOPT_WIN    = 0x10,  ///< Option has window-local value
   SOPT_BUF    = 0x20,  ///< Option has buffer-local value
-  SOPT_UNSET  = 0x40,  ///< Option does not have local value set
 };
 
-/// Option types for various functions in option.c
-enum {
-  SREQ_GLOBAL = 0,  ///< Request global option value
-  SREQ_WIN    = 1,  ///< Request window-local option value
-  SREQ_BUF    = 2,  ///< Request buffer-local option value
-};
+/// Requested option scopes for various functions in option.c
+typedef enum {
+  kOptReqGlobal = 0,  ///< Request global option value
+  kOptReqWin    = 1,  ///< Request window-local option value
+  kOptReqBuf    = 2,  ///< Request buffer-local option value
+} OptReqScope;
 
 // OptVal helper macros.
 #define NIL_OPTVAL ((OptVal) { .type = kOptValTypeNil })

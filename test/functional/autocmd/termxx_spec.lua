@@ -22,7 +22,6 @@ describe('autocmd TermClose', function()
     command('set shellcmdflag=EXE shellredir= shellpipe= shellquote= shellxquote=')
   end)
 
-
   local function test_termclose_delete_own_buf()
     -- The terminal process needs to keep running so that TermClose isn't triggered immediately.
     nvim('set_option_value', 'shell', string.format('"%s" INTERACT', testprg('shell-test')), {})
@@ -149,21 +148,21 @@ it('autocmd TermEnter, TermLeave', function()
 
   -- TermLeave is also triggered by :quit.
   command('split foo')
+  feed('<Ignore>')  -- Add input to separate two RPC requests
   command('wincmd w')
   feed('i')
   command('q!')
-  eq(
-    {
-     {'TermOpen',  'n'},
-     {'TermEnter', 't'},
-     {'TermLeave', 'n'},
-     {'TermEnter', 't'},
-     {'TermLeave', 'n'},
-     {'TermEnter', 't'},
-     {'TermClose', 't'},
-     {'TermLeave', 'n'},
-    },
-    eval('g:evs'))
+  feed('<Ignore>')  -- Add input to separate two RPC requests
+  eq({
+    {'TermOpen',  'n'},
+    {'TermEnter', 't'},
+    {'TermLeave', 'n'},
+    {'TermEnter', 't'},
+    {'TermLeave', 'n'},
+    {'TermEnter', 't'},
+    {'TermClose', 't'},
+    {'TermLeave', 'n'},
+  }, eval('g:evs'))
 end)
 
 describe('autocmd TextChangedT', function()

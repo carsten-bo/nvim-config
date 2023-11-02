@@ -1477,14 +1477,6 @@ describe('API', function()
       nvim('set_option_value', 'debug', 'beep', {})
       eq(true, nvim('get_option_info2', 'debug', {}).was_set)
     end)
-  end)
-
-  describe('nvim_get_option_value, nvim_set_option_value', function()
-    it('works', function()
-      ok(nvim('get_option_value', 'equalalways', {}))
-      nvim('set_option_value', 'equalalways', false, {})
-      ok(not nvim('get_option_value', 'equalalways', {}))
-    end)
 
     it('validation', function()
       eq("Invalid 'scope': expected 'local' or 'global'",
@@ -1493,7 +1485,7 @@ describe('API', function()
         pcall_err(nvim, 'set_option_value', 'scrolloff', 1, {scope = 'bogus'}))
       eq("Invalid 'scope': expected String, got Integer",
         pcall_err(nvim, 'get_option_value', 'scrolloff', {scope = 42}))
-      eq("Invalid 'value': expected Integer/Boolean/String, got Array",
+      eq("Invalid 'value': expected valid option type, got Array",
         pcall_err(nvim, 'set_option_value', 'scrolloff', {}, {}))
       eq("Invalid value for option 'scrolloff': expected Number, got Boolean true",
         pcall_err(nvim, 'set_option_value', 'scrolloff', true, {}))
@@ -1544,14 +1536,18 @@ describe('API', function()
 
       -- Now try with options with a special "local is unset" value (e.g. 'undolevels')
       nvim('set_option_value', 'undolevels', 1000, {})
-      eq(1000, nvim('get_option_value', 'undolevels', {scope = 'local'}))
+      nvim('set_option_value', 'undolevels', 1200, {scope = 'local'})
+      eq(1200, nvim('get_option_value', 'undolevels', {scope = 'local'}))
       nvim('set_option_value', 'undolevels', NIL, {scope = 'local'})
       eq(-123456, nvim('get_option_value', 'undolevels', {scope = 'local'}))
+      eq(1000, nvim('get_option_value', 'undolevels', {}))
 
       nvim('set_option_value', 'autoread', true, {})
-      eq(true, nvim('get_option_value', 'autoread', {scope = 'local'}))
+      nvim('set_option_value', 'autoread', false, {scope = 'local'})
+      eq(false, nvim('get_option_value', 'autoread', {scope = 'local'}))
       nvim('set_option_value', 'autoread', NIL, {scope = 'local'})
       eq(NIL, nvim('get_option_value', 'autoread', {scope = 'local'}))
+      eq(true, nvim('get_option_value', 'autoread', {}))
     end)
 
     it('set window options', function()
@@ -1616,6 +1612,15 @@ describe('API', function()
          pcall_err(nvim, 'get_option_value', 'commentstring', { filetype = 'lua' }))
     end)
 
+    it("value of 'modified' is always false for scratch buffers", function()
+      nvim('set_current_buf', nvim('create_buf', true, true))
+      insert([[
+        foo
+        bar
+        baz
+      ]])
+      eq(false, nvim('get_option_value', 'modified', {}))
+    end)
   end)
 
   describe('nvim_{get,set}_current_buf, nvim_list_bufs', function()

@@ -28,7 +28,7 @@ target_link_libraries(main_lib INTERFACE ${LUV_LIBRARY})
 find_package(Iconv REQUIRED)
 find_package(Lpeg REQUIRED)
 find_package(Libtermkey 0.22 REQUIRED)
-find_package(Libvterm 0.3 REQUIRED)
+find_package(Libvterm 0.3.3 REQUIRED)
 find_package(Msgpack 1.0.0 REQUIRED)
 find_package(Treesitter 0.20.8 REQUIRED)
 find_package(Unibilium 2.0 REQUIRED)
@@ -100,7 +100,8 @@ else()
     -Wdouble-promotion
     -Wmissing-noreturn
     -Wmissing-format-attribute
-    -Wmissing-prototypes)
+    -Wmissing-prototypes
+    -fsigned-char)
 
   if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
     target_compile_options(main_lib INTERFACE -fno-common
@@ -170,11 +171,6 @@ if(CI_BUILD)
   else()
     target_compile_options(main_lib INTERFACE -Werror)
   endif()
-endif()
-
-option(UNSIGNED_CHAR "Set char to be unsigned" OFF)
-if(UNSIGNED_CHAR)
-  target_compile_options(main_lib INTERFACE -funsigned-char)
 endif()
 
 target_compile_definitions(main_lib INTERFACE INCLUDE_GENERATED_DECLARATIONS)
@@ -942,7 +938,7 @@ add_custom_command(
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 
-add_custom_target(doc
-  DEPENDS ${VIMDOC_FILES} ${GEN_EVAL_FILES}
-)
-
+add_custom_target(doc-eval DEPENDS ${GEN_EVAL_FILES})
+add_custom_target(doc-vim DEPENDS ${VIMDOC_FILES})
+add_custom_target(doc)
+add_dependencies(doc doc-vim doc-eval)

@@ -3507,7 +3507,7 @@ function vim.fn.getregtype(regname) end
 ---     Note that this is a copy, the value of
 ---     script-local variables cannot be changed using
 ---     this dictionary.
----     version  Vimscript version, always 1
+---     version  Vim script version, always 1
 ---
 --- Examples: >vim
 ---   echo getscriptinfo({'name': 'myscript'})
@@ -8530,7 +8530,7 @@ function vim.fn.slice(expr, start, end_) end
 --- {address} should be the path of a local domain socket (on
 --- unix) or named pipe (on Windows). If {mode} is "tcp" then
 --- {address} should be of the form "host:port" where the host
---- should be an ip adderess or host name, and port the port
+--- should be an ip address or host name, and port the port
 --- number.
 ---
 --- For "pipe" mode, see |luv-pipe-handle|. For "tcp" mode, see
@@ -9845,15 +9845,18 @@ function vim.fn.tr(src, fromstr, tostr) end
 
 --- Return {text} as a String where any character in {mask} is
 --- removed from the beginning and/or end of {text}.
---- If {mask} is not given, {mask} is all characters up to 0x20,
---- which includes Tab, space, NL and CR, plus the non-breaking
---- space character 0xa0.
+---
+--- If {mask} is not given, or is an empty string, {mask} is all
+--- characters up to 0x20, which includes Tab, space, NL and CR,
+--- plus the non-breaking space character 0xa0.
+---
 --- The optional {dir} argument specifies where to remove the
 --- characters:
 ---   0  remove from the beginning and end of {text}
 ---   1  remove only at the beginning of {text}
 ---   2  remove only at the end of {text}
 --- When omitted both ends are trimmed.
+---
 --- This function deals with multibyte characters properly.
 --- Returns an empty string on error.
 ---

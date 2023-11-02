@@ -26,6 +26,7 @@
 #include "nvim/ex_eval.h"
 #include "nvim/fold.h"
 #include "nvim/globals.h"
+#include "nvim/lua/base64.h"
 #include "nvim/lua/converter.h"
 #include "nvim/lua/spell.h"
 #include "nvim/lua/stdlib.h"
@@ -515,7 +516,7 @@ static int nlua_iconv(lua_State *lstate)
   const char *str = lua_tolstring(lstate, 1, &str_len);
 
   char *from = enc_canonize(enc_skip((char *)lua_tolstring(lstate, 2, NULL)));
-  char *to   = enc_canonize(enc_skip((char *)lua_tolstring(lstate, 3, NULL)));
+  char *to = enc_canonize(enc_skip((char *)lua_tolstring(lstate, 3, NULL)));
 
   vimconv_T vimconv;
   vimconv.vc_type = CONV_NONE;
@@ -605,6 +606,10 @@ void nlua_state_add_stdlib(lua_State *const lstate, bool is_thread)
     // depends on p_ambw, p_emoji
     lua_pushcfunction(lstate, &nlua_iconv);
     lua_setfield(lstate, -2, "iconv");
+
+    // vim.base64
+    luaopen_base64(lstate);
+    lua_setfield(lstate, -2, "base64");
 
     nlua_state_add_internal(lstate);
   }

@@ -91,6 +91,7 @@ enum {
   CTRL_X_LOCAL_MSG = 15,       ///< only used in "ctrl_x_msgs"
   CTRL_X_EVAL = 16,            ///< for builtin function complete()
   CTRL_X_CMDLINE_CTRL_X = 17,  ///< CTRL-X typed in CTRL_X_CMDLINE
+  CTRL_X_BUFNAMES = 18,
 };
 
 #define CTRL_X_MSG(i) ctrl_x_msgs[(i) & ~CTRL_X_WANT_IDENT]
@@ -535,6 +536,8 @@ bool vim_is_ctrl_x_key(int c)
   case CTRL_X_SPELL:
     return c == Ctrl_S || c == Ctrl_P || c == Ctrl_N;
   case CTRL_X_EVAL:
+    return (c == Ctrl_P || c == Ctrl_N);
+  case CTRL_X_BUFNAMES:
     return (c == Ctrl_P || c == Ctrl_N);
   }
   internal_error("vim_is_ctrl_x_key()");
@@ -2699,10 +2702,41 @@ static int info_add_completion_info(list_T *li)
     return OK;
   }
 
+  bool forward = compl_dir_forward();
+  compl_T *match = compl_first_match;
+  // There are four cases to consider here:
+  // 1) when just going forward through the menu,
+  //    compl_first_match should point to the initial entry with
+  //    number zero and CP_ORIGINAL_TEXT flag set
+  // 2) when just going backwards,
+  //    compl-first_match should point to the last entry before
+  //    the entry with the CP_ORIGINAL_TEXT flag set
+  // 3) when first going forwards and then backwards, e.g.
+  //    pressing C-N, C-P, compl_first_match points to the
+  //    last entry before the entry with the CP_ORIGINAL_TEXT
+  //    flag set and next-entry moves opposite through the list
+  //    compared to case 2, so pretend the direction is forward again
+  // 4) when first going backwards and then forwards, e.g.
+  //    pressing C-P, C-N, compl_first_match points to the
+  //    first entry with the CP_ORIGINAL_TEXT
+  //    flag set and next-entry moves in opposite direction through the list
+  //    compared to case 1, so pretend the direction is backwards again
+  //
+  // But only do this when the 'noselect' option is not active!
+
+  if (!compl_no_select) {
+    if (forward && !match_at_original_text(match)) {
+      forward = false;
+    } else if (!forward && match_at_original_text(match)) {
+      forward = true;
+    }
+  }
+
   // Skip the element with the CP_ORIGINAL_TEXT flag at the beginning, in case of
   // forward completion, or at the end, in case of backward completion.
-  compl_T *match = compl_dir_forward() ? compl_first_match->cp_next
-                                       : compl_first_match->cp_prev->cp_prev;
+  match = forward ? match->cp_next
+                  : (compl_no_select ? match->cp_prev : match->cp_prev->cp_prev);
+
   while (match != NULL && !match_at_original_text(match)) {
     dict_T *di = tv_dict_alloc();
 
@@ -2719,7 +2753,7 @@ static int info_add_completion_info(list_T *li)
       tv_dict_add_tv(di, S_LEN("user_data"), &match->cp_user_data);
     }
 
-    match = compl_dir_forward() ? match->cp_next : match->cp_prev;
+    match = forward ? match->cp_next : match->cp_prev;
   }
 
   return OK;
@@ -2917,6 +2951,8 @@ static int process_next_cpt_value(ins_compl_next_state_T *st, int *compl_type_ar
       compl_type = CTRL_X_PATH_PATTERNS;
     } else if (*st->e_cpt == 'd') {
       compl_type = CTRL_X_PATH_DEFINES;
+    } else if (*st->e_cpt == 'f') {
+      compl_type = CTRL_X_BUFNAMES;
     } else if (*st->e_cpt == ']' || *st->e_cpt == 't') {
       compl_type = CTRL_X_TAGS;
       if (!shortmess(SHM_COMPLETIONSCAN)) {
@@ -3274,6 +3310,9 @@ static bool get_next_completion_match(int type, ins_compl_next_state_T *st, pos_
   case CTRL_X_SPELL:
     get_next_spell_completion(st->first_match_pos.lnum);
     break;
+  case CTRL_X_BUFNAMES:
+    get_next_bufname_token();
+    break;
 
   default:            // normal ^P/^N and ^X^L
     found_new_match = get_next_default_completion(st, ini);
@@ -3289,6 +3328,33 @@ static bool get_next_completion_match(int type, ins_compl_next_state_T *st, pos_
   }
 
   return found_new_match;
+}
+
+static void get_next_bufname_token(void)
+{
+  FOR_ALL_BUFFERS(b) {
+    if (b->b_p_bl) {
+      char *start = get_past_head(b->b_sfname);
+      char *current = start;
+      char *p = (char *)path_next_component(start);
+      while (true) {
+        int len = (int)(p - current) - (*p == NUL ? 0 : 1);
+        // treat . as a separator, unless it is the first char in a filename
+        char *dot = strchr(current, '.');
+        if (dot && *p == NUL && *current != '.') {
+          len = (int)(dot - current);
+          p = dot + 1;
+        }
+        ins_compl_add(current, len, NULL, NULL, false, NULL, 0,
+                      p_ic ? CP_ICASE : 0, false);
+        if (*p == NUL) {
+          break;
+        }
+        current = p;
+        p = (char *)path_next_component(p);
+      }
+    }
+  }
 }
 
 /// Get the next expansion(s), using "compl_pattern".
@@ -3635,7 +3701,7 @@ static int ins_compl_next(bool allow_get_expansion, int count, bool insert_match
   }
 
   if (allow_get_expansion && insert_match
-      && (!(compl_get_longest || compl_restarting) || compl_used_match)) {
+      && (!compl_get_longest || compl_used_match)) {
     // Delete old text to be replaced
     ins_compl_delete();
   }

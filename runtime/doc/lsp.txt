@@ -1179,8 +1179,8 @@ declaration({options})                             *vim.lsp.buf.declaration()*
       • {options}  (table|nil) additional options
                    • reuse_win: (boolean) Jump to existing window if buffer is
                      already open.
-                   • on_list: (function) handler for list results. See
-                     |lsp-on-list-handler|
+                   • on_list: (function) |lsp-on-list-handler| replacing the
+                     default handler. Called for any non-empty result.
 
 definition({options})                               *vim.lsp.buf.definition()*
     Jumps to the definition of the symbol under the cursor.
@@ -1189,8 +1189,8 @@ definition({options})                               *vim.lsp.buf.definition()*
       • {options}  (table|nil) additional options
                    • reuse_win: (boolean) Jump to existing window if buffer is
                      already open.
-                   • on_list: (function) handler for list results. See
-                     |lsp-on-list-handler|
+                   • on_list: (function) |lsp-on-list-handler| replacing the
+                     default handler. Called for any non-empty result.
 
 document_highlight()                        *vim.lsp.buf.document_highlight()*
     Send request to the server to resolve document highlights for the current
@@ -1271,8 +1271,8 @@ implementation({options})                       *vim.lsp.buf.implementation()*
 
     Parameters: ~
       • {options}  (table|nil) additional options
-                   • on_list: (function) handler for list results. See
-                     |lsp-on-list-handler|
+                   • on_list: (function) |lsp-on-list-handler| replacing the
+                     default handler. Called for any non-empty result.
 
 incoming_calls()                                *vim.lsp.buf.incoming_calls()*
     Lists all the call sites of the symbol under the cursor in the |quickfix|
@@ -1329,8 +1329,8 @@ type_definition({options})                     *vim.lsp.buf.type_definition()*
       • {options}  (table|nil) additional options
                    • reuse_win: (boolean) Jump to existing window if buffer is
                      already open.
-                   • on_list: (function) handler for list results. See
-                     |lsp-on-list-handler|
+                   • on_list: (function) |lsp-on-list-handler| replacing the
+                     default handler. Called for any non-empty result.
 
 workspace_symbol({query}, {options})          *vim.lsp.buf.workspace_symbol()*
     Lists all symbols in the current workspace in the quickfix window.
@@ -1711,19 +1711,6 @@ convert_signature_help_to_markdown_lines({signature_help}, {ft}, {triggers})
     See also: ~
       • https://microsoft.github.io/language-server-protocol/specifications/specification-current/#textDocument_signatureHelp
 
-                                     *vim.lsp.util.extract_completion_items()*
-extract_completion_items({result})
-    Can be used to extract the completion items from a `textDocument/completion` request, which may return one of `CompletionItem[]` , `CompletionList` or null.
-
-    Parameters: ~
-      • {result}  (table) The result of a `textDocument/completion` request
-
-    Return: ~
-        (table) List of completion items
-
-    See also: ~
-      • https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
-
 get_effective_tabstop({bufnr})          *vim.lsp.util.get_effective_tabstop()*
     Returns indentation size.
 
@@ -1925,15 +1912,6 @@ open_floating_preview({contents}, {syntax}, {opts})
         (integer) bufnr of newly created float window
         (integer) winid of newly created float window preview window
 
-parse_snippet({input})                          *vim.lsp.util.parse_snippet()*
-    Parses snippets in a completion entry.
-
-    Parameters: ~
-      • {input}  (string) unparsed snippet
-
-    Return: ~
-        (string) parsed snippet
-
 preview_location({location}, {opts})         *vim.lsp.util.preview_location()*
     Previews a location in a floating window
 
@@ -2001,23 +1979,6 @@ symbols_to_items({symbols}, {bufnr})         *vim.lsp.util.symbols_to_items()*
 
     Parameters: ~
       • {symbols}  (table) DocumentSymbol[] or SymbolInformation[]
-
-              *vim.lsp.util.text_document_completion_list_to_complete_items()*
-text_document_completion_list_to_complete_items({result}, {prefix})
-    Turns the result of a `textDocument/completion` request into
-    vim-compatible |complete-items|.
-
-    Parameters: ~
-      • {result}  (table) The result of a `textDocument/completion` call, e.g.
-                  from |vim.lsp.buf.completion()|, which may be one of
-                  `CompletionItem[]`, `CompletionList` or `null`
-      • {prefix}  (string) the prefix to filter the completion items
-
-    Return: ~
-        (table) { matches = complete-items table, incomplete = bool }
-
-    See also: ~
-      • complete-items
 
 
 ==============================================================================
