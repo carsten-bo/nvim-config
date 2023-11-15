@@ -69,7 +69,7 @@ vim.log = {
 }
 
 -- TODO(lewis6991): document that the signature is system({cmd}, [{opts},] {on_exit})
---- Run a system command
+--- Runs a system command or throws an error if {cmd} cannot be run.
 ---
 --- Examples:
 ---
@@ -82,16 +82,17 @@ vim.log = {
 ---   print(obj.stderr)
 --- end
 ---
---- -- Run asynchronously
+--- -- Runs asynchronously:
 --- vim.system({'echo', 'hello'}, { text = true }, on_exit)
 ---
---- -- Run synchronously
+--- -- Runs synchronously:
 --- local obj = vim.system({'echo', 'hello'}, { text = true }):wait()
 --- -- { code = 0, signal = 0, stdout = 'hello', stderr = '' }
 ---
 --- ```
 ---
---- See |uv.spawn()| for more details.
+--- See |uv.spawn()| for more details. Note: unlike |uv.spawn()|, vim.system
+--- throws an error if {cmd} cannot be run.
 ---
 --- @param cmd (string[]) Command to execute
 --- @param opts (SystemOpts|nil) Options:
@@ -370,7 +371,7 @@ end
 
 local VIM_CMD_ARG_MAX = 20
 
---- Execute Vim script commands.
+--- Executes Vim script commands.
 ---
 --- Note that `vim.cmd` can be indexed with a command name to return a callable function to the
 --- command.
@@ -587,7 +588,7 @@ function vim.defer_fn(fn, timeout)
   return timer
 end
 
---- Display a notification to the user.
+--- Displays a notification to the user.
 ---
 --- This function can be overridden by plugins to display notifications using a
 --- custom provider (such as the system notification provider). By default,
@@ -609,7 +610,7 @@ end
 do
   local notified = {}
 
-  --- Display a notification only one time.
+  --- Displays a notification only one time.
   ---
   --- Like |vim.notify()|, but subsequent calls with the same message will not
   --- display a notification.
@@ -649,7 +650,7 @@ local on_key_cbs = {}
 ---if on_key() is called without arguments.
 function vim.on_key(fn, ns_id)
   if fn == nil and ns_id == nil then
-    return #on_key_cbs
+    return vim.tbl_count(on_key_cbs)
   end
 
   vim.validate({
@@ -690,7 +691,7 @@ function vim._on_key(char)
   end
 end
 
---- Generate a list of possible completions for the string.
+--- Generates a list of possible completions for the string.
 --- String has the pattern.
 ---
 ---     1. Can we get it to just return things in the global namespace with that name prefix
@@ -917,7 +918,7 @@ function vim.print(...)
   return ...
 end
 
---- Translate keycodes.
+--- Translates keycodes.
 ---
 --- Example:
 ---
@@ -1028,156 +1029,6 @@ function vim.deprecate(name, alternative, version, plugin, backtrace)
     vim.notify(debug.traceback('', 2):sub(2), vim.log.levels.WARN)
   end
   return displayed and msg or nil
-end
-
---- Create builtin mappings (incl. menus).
---- Called once on startup.
-function vim._init_default_mappings()
-  -- mappings
-
-  local function region_chunks(region)
-    local chunks = {}
-    local maxcol = vim.v.maxcol
-    for line, cols in vim.spairs(region) do
-      local endcol = cols[2] == maxcol and -1 or cols[2]
-      local chunk = vim.api.nvim_buf_get_text(0, line, cols[1], line, endcol, {})[1]
-      table.insert(chunks, chunk)
-    end
-    return chunks
-  end
-
-  local function _visual_search(cmd)
-    assert(cmd == '/' or cmd == '?')
-    local region = vim.region(
-      0,
-      '.',
-      'v',
-      vim.api.nvim_get_mode().mode:sub(1, 1),
-      vim.o.selection == 'inclusive'
-    )
-    local chunks = region_chunks(region)
-    local esc_chunks = vim
-      .iter(chunks)
-      :map(function(v)
-        return vim.fn.escape(v, cmd == '/' and [[/\]] or [[?\]])
-      end)
-      :totable()
-    local esc_pat = table.concat(esc_chunks, [[\n]])
-    local search_cmd = ([[%s\V%s%s]]):format(cmd, esc_pat, '\n')
-    return '\27' .. search_cmd
-  end
-
-  local function map(mode, lhs, rhs)
-    vim.keymap.set(mode, lhs, rhs, { desc = 'Nvim builtin' })
-  end
-
-  map('n', 'Y', 'y$')
-  -- Use normal! <C-L> to prevent inserting raw <C-L> when using i_<C-O>. #17473
-  map('n', '<C-L>', '<Cmd>nohlsearch<Bar>diffupdate<Bar>normal! <C-L><CR>')
-  map('i', '<C-U>', '<C-G>u<C-U>')
-  map('i', '<C-W>', '<C-G>u<C-W>')
-  vim.keymap.set('x', '*', function()
-    return _visual_search('/')
-  end, { desc = ':help v_star-default', expr = true, silent = true })
-  vim.keymap.set('x', '#', function()
-    return _visual_search('?')
-  end, { desc = ':help v_#-default', expr = true, silent = true })
-  -- Use : instead of <Cmd> so that ranges are supported. #19365
-  map('n', '&', ':&&<CR>')
-
-  -- gx
-
-  -- TODO: use vim.region() when it lands... #13896 #16843
-  local function get_visual_selection()
-    local save_a = vim.fn.getreginfo('a')
-    vim.cmd([[norm! "ay]])
-    local selection = vim.fn.getreg('a', 1)
-    vim.fn.setreg('a', save_a)
-    return selection
-  end
-
-  local function do_open(uri)
-    local _, err = vim.ui.open(uri)
-    if err then
-      vim.notify(err, vim.log.levels.ERROR)
-    end
-  end
-
-  local gx_desc =
-    'Opens filepath or URI under cursor with the system handler (file explorer, web browser, …)'
-  vim.keymap.set({ 'n' }, 'gx', function()
-    do_open(vim.fn.expand('<cfile>'))
-  end, { desc = gx_desc })
-  vim.keymap.set({ 'x' }, 'gx', function()
-    do_open(get_visual_selection())
-  end, { desc = gx_desc })
-
-  -- menus
-
-  -- TODO VimScript, no l10n
-  vim.cmd([[
-    aunmenu *
-    vnoremenu PopUp.Cut                     "+x
-    vnoremenu PopUp.Copy                    "+y
-    anoremenu PopUp.Paste                   "+gP
-    vnoremenu PopUp.Paste                   "+P
-    vnoremenu PopUp.Delete                  "_x
-    nnoremenu PopUp.Select\ All             ggVG
-    vnoremenu PopUp.Select\ All             gg0oG$
-    inoremenu PopUp.Select\ All             <C-Home><C-O>VG
-    anoremenu PopUp.-1-                     <Nop>
-    anoremenu PopUp.How-to\ disable\ mouse  <Cmd>help disable-mouse<CR>
-  ]])
-end
-
-function vim._init_default_autocmds()
-  local nvim_terminal_augroup = vim.api.nvim_create_augroup('nvim_terminal', {})
-  vim.api.nvim_create_autocmd({ 'BufReadCmd' }, {
-    pattern = 'term://*',
-    group = nvim_terminal_augroup,
-    nested = true,
-    command = "if !exists('b:term_title')|call termopen(matchstr(expand(\"<amatch>\"), '\\c\\mterm://\\%(.\\{-}//\\%(\\d\\+:\\)\\?\\)\\?\\zs.*'), {'cwd': expand(get(matchlist(expand(\"<amatch>\"), '\\c\\mterm://\\(.\\{-}\\)//'), 1, ''))})",
-  })
-  vim.api.nvim_create_autocmd({ 'TermClose' }, {
-    group = nvim_terminal_augroup,
-    desc = 'Automatically close terminal buffers when started with no arguments and exiting without an error',
-    callback = function(args)
-      if vim.v.event.status == 0 then
-        local info = vim.api.nvim_get_chan_info(vim.bo[args.buf].channel)
-        local argv = info.argv or {}
-        if #argv == 1 and argv[1] == vim.o.shell then
-          vim.cmd({ cmd = 'bdelete', args = { args.buf }, bang = true })
-        end
-      end
-    end,
-  })
-
-  vim.api.nvim_create_autocmd({ 'CmdwinEnter' }, {
-    pattern = '[:>]',
-    group = vim.api.nvim_create_augroup('nvim_cmdwin', {}),
-    command = 'syntax sync minlines=1 maxlines=1',
-  })
-
-  vim.api.nvim_create_autocmd({ 'SwapExists' }, {
-    pattern = '*',
-    group = vim.api.nvim_create_augroup('nvim_swapfile', {}),
-    callback = function()
-      local info = vim.fn.swapinfo(vim.v.swapname)
-      local user = vim.uv.os_get_passwd().username
-      local iswin = 1 == vim.fn.has('win32')
-      if info.error or info.pid <= 0 or (not iswin and info.user ~= user) then
-        vim.v.swapchoice = '' -- Show the prompt.
-        return
-      end
-      vim.v.swapchoice = 'e' -- Choose "(E)dit".
-      vim.notify(('W325: Ignoring swapfile from Nvim process %d'):format(info.pid))
-    end,
-  })
-end
-
-function vim._init_defaults()
-  vim._init_default_mappings()
-  vim._init_default_autocmds()
 end
 
 require('vim._options')

@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -32,23 +29,23 @@ static const char e_digit_expected[] = N_("E548: Digit expected");
 cursorentry_T shape_table[SHAPE_IDX_COUNT] = {
   // Values are set by 'guicursor' and 'mouseshape'.
   // Adjust the SHAPE_IDX_ defines when changing this!
-  { "normal", 0, 0, 0, 700L, 400L, 250L, 0, 0, "n", SHAPE_CURSOR + SHAPE_MOUSE },
-  { "visual", 0, 0, 0, 700L, 400L, 250L, 0, 0, "v", SHAPE_CURSOR + SHAPE_MOUSE },
-  { "insert", 0, 0, 0, 700L, 400L, 250L, 0, 0, "i", SHAPE_CURSOR + SHAPE_MOUSE },
-  { "replace", 0, 0, 0, 700L, 400L, 250L, 0, 0, "r", SHAPE_CURSOR + SHAPE_MOUSE },
-  { "cmdline_normal", 0, 0, 0, 700L, 400L, 250L, 0, 0, "c", SHAPE_CURSOR + SHAPE_MOUSE },
-  { "cmdline_insert", 0, 0, 0, 700L, 400L, 250L, 0, 0, "ci", SHAPE_CURSOR + SHAPE_MOUSE },
-  { "cmdline_replace", 0, 0, 0, 700L, 400L, 250L, 0, 0, "cr", SHAPE_CURSOR + SHAPE_MOUSE },
-  { "operator", 0, 0, 0, 700L, 400L, 250L, 0, 0, "o", SHAPE_CURSOR + SHAPE_MOUSE },
-  { "visual_select", 0, 0, 0, 700L, 400L, 250L, 0, 0, "ve", SHAPE_CURSOR + SHAPE_MOUSE },
-  { "cmdline_hover", 0, 0, 0,   0L,   0L,   0L, 0, 0, "e", SHAPE_MOUSE },
-  { "statusline_hover", 0, 0, 0,   0L,   0L,   0L, 0, 0, "s", SHAPE_MOUSE },
-  { "statusline_drag", 0, 0, 0,   0L,   0L,   0L, 0, 0, "sd", SHAPE_MOUSE },
-  { "vsep_hover", 0, 0, 0,   0L,   0L,   0L, 0, 0, "vs", SHAPE_MOUSE },
-  { "vsep_drag", 0, 0, 0,   0L,   0L,   0L, 0, 0, "vd", SHAPE_MOUSE },
-  { "more", 0, 0, 0,   0L,   0L,   0L, 0, 0, "m", SHAPE_MOUSE },
-  { "more_lastline", 0, 0, 0,   0L,   0L,   0L, 0, 0, "ml", SHAPE_MOUSE },
-  { "showmatch", 0, 0, 0, 100L, 100L, 100L, 0, 0, "sm", SHAPE_CURSOR },
+  { "normal", 0, 0, 0, 700, 400, 250, 0, 0, "n", SHAPE_CURSOR + SHAPE_MOUSE },
+  { "visual", 0, 0, 0, 700, 400, 250, 0, 0, "v", SHAPE_CURSOR + SHAPE_MOUSE },
+  { "insert", 0, 0, 0, 700, 400, 250, 0, 0, "i", SHAPE_CURSOR + SHAPE_MOUSE },
+  { "replace", 0, 0, 0, 700, 400, 250, 0, 0, "r", SHAPE_CURSOR + SHAPE_MOUSE },
+  { "cmdline_normal", 0, 0, 0, 700, 400, 250, 0, 0, "c", SHAPE_CURSOR + SHAPE_MOUSE },
+  { "cmdline_insert", 0, 0, 0, 700, 400, 250, 0, 0, "ci", SHAPE_CURSOR + SHAPE_MOUSE },
+  { "cmdline_replace", 0, 0, 0, 700, 400, 250, 0, 0, "cr", SHAPE_CURSOR + SHAPE_MOUSE },
+  { "operator", 0, 0, 0, 700, 400, 250, 0, 0, "o", SHAPE_CURSOR + SHAPE_MOUSE },
+  { "visual_select", 0, 0, 0, 700, 400, 250, 0, 0, "ve", SHAPE_CURSOR + SHAPE_MOUSE },
+  { "cmdline_hover", 0, 0, 0,   0,   0,   0, 0, 0, "e", SHAPE_MOUSE },
+  { "statusline_hover", 0, 0, 0,   0,   0,   0, 0, 0, "s", SHAPE_MOUSE },
+  { "statusline_drag", 0, 0, 0,   0,   0,   0, 0, 0, "sd", SHAPE_MOUSE },
+  { "vsep_hover", 0, 0, 0,   0,   0,   0, 0, 0, "vs", SHAPE_MOUSE },
+  { "vsep_drag", 0, 0, 0,   0,   0,   0, 0, 0, "vd", SHAPE_MOUSE },
+  { "more", 0, 0, 0,   0,   0,   0, 0, 0, "m", SHAPE_MOUSE },
+  { "more_lastline", 0, 0, 0,   0,   0,   0, 0, 0, "ml", SHAPE_MOUSE },
+  { "showmatch", 0, 0, 0, 100, 100, 100, 0, 0, "sm", SHAPE_CURSOR },
 };
 
 /// Converts cursor_shapes into an Array of Dictionaries
@@ -115,10 +112,9 @@ const char *parse_shape_opt(int what)
   int len;
   int i;
   int found_ve = false;                 // found "ve" flag
-  int round;
 
   // First round: check for errors; second round: do it for real.
-  for (round = 1; round <= 2; round++) {
+  for (int round = 1; round <= 2; round++) {
     if (round == 2 || *p_guicursor == NUL) {
       // Set all entries to default (block, blinkon0, default color).
       // This is the default for anything that is not set.

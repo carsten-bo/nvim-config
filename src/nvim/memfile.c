@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 /// An abstraction to handle blocks of memory which can be stored in a file.
 /// This is the implementation of a sort of virtual memory.
 ///
@@ -125,7 +122,7 @@ memfile_T *mf_open(char *fname, int flags)
   // must be rounded up.
   if (mfp->mf_fd < 0
       || (flags & (O_TRUNC|O_EXCL))
-      || (size = vim_lseek(mfp->mf_fd, 0L, SEEK_END)) <= 0) {
+      || (size = vim_lseek(mfp->mf_fd, 0, SEEK_END)) <= 0) {
     // no file or empty file
     mfp->mf_blocknr_max = 0;
   } else {

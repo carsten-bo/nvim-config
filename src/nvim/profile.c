@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 #include <assert.h>
 #include <math.h>
 #include <stdbool.h>
@@ -301,13 +298,13 @@ void ex_profile(exarg_T *eap)
     profile_fname = expand_env_save_opt(e, true);
     do_profiling = PROF_YES;
     profile_set_wait(profile_zero());
-    set_vim_var_nr(VV_PROFILING, 1L);
+    set_vim_var_nr(VV_PROFILING, 1);
   } else if (do_profiling == PROF_NONE) {
     emsg(_("E750: First use \":profile start {fname}\""));
   } else if (strcmp(eap->arg, "stop") == 0) {
     profile_dump();
     do_profiling = PROF_NONE;
-    set_vim_var_nr(VV_PROFILING, 0L);
+    set_vim_var_nr(VV_PROFILING, 0);
     profile_reset();
   } else if (strcmp(eap->arg, "pause") == 0) {
     if (do_profiling == PROF_YES) {
@@ -437,12 +434,11 @@ static void prof_func_line(FILE *fd, int count, const proftime_T *total, const p
 /// @param prefer_self  when equal print only self time
 static void prof_sort_list(FILE *fd, ufunc_T **sorttab, int st_len, char *title, bool prefer_self)
 {
-  int i;
   ufunc_T *fp;
 
   fprintf(fd, "FUNCTIONS SORTED ON %s TIME\n", title);
   fprintf(fd, "count  total (s)   self (s)  function\n");
-  for (i = 0; i < 20 && i < st_len; i++) {
+  for (int i = 0; i < 20 && i < st_len; i++) {
     fp = sorttab[i];
     prof_func_line(fd, fp->uf_tm_count, &fp->uf_tm_total, &fp->uf_tm_self,
                    prefer_self);

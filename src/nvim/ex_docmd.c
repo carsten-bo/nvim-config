@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // ex_docmd.c: functions for executing an Ex command line.
 
 #include <assert.h>
@@ -336,16 +333,12 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
   linenr_T *breakpoint = NULL;          // ptr to breakpoint field in cookie
   int *dbg_tick = NULL;                 // ptr to dbg_tick field in cookie
   struct dbg_stuff debug_saved;         // saved things for debug mode
-  int initial_trylevel;
-  msglist_T **saved_msg_list = NULL;
   msglist_T *private_msg_list;
 
   // "fgetline" and "cookie" passed to do_one_cmd()
   char *(*cmd_getline)(int, void *, int, bool);
   void *cmd_cookie;
   struct loop_cookie cmd_loop_cookie;
-  void *real_cookie;
-  int getline_is_func;
   static int call_depth = 0;            // recursiveness
 
   // For every pair of do_cmdline()/do_one_cmd() calls, use an extra memory
@@ -354,7 +347,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
   // combine the messages stored by an earlier invocation of do_one_cmd()
   // with the command name of the later one.  This would happen when
   // BufWritePost autocommands are executed after a write error.
-  saved_msg_list = msg_list;
+  msglist_T **saved_msg_list = msg_list;
   msg_list = &private_msg_list;
   private_msg_list = NULL;
 
@@ -374,10 +367,10 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
 
   ga_init(&lines_ga, (int)sizeof(wcmd_T), 10);
 
-  real_cookie = getline_cookie(fgetline, cookie);
+  void *real_cookie = getline_cookie(fgetline, cookie);
 
   // Inside a function use a higher nesting level.
-  getline_is_func = getline_equal(fgetline, cookie, get_func_line);
+  bool getline_is_func = getline_equal(fgetline, cookie, get_func_line);
   if (getline_is_func && ex_nesting_level == func_level(real_cookie)) {
     ex_nesting_level++;
   }
@@ -409,7 +402,7 @@ int do_cmdline(char *cmdline, LineGetter fgetline, void *cookie, int flags)
     CLEAR_FIELD(debug_saved);
   }
 
-  initial_trylevel = trylevel;
+  int initial_trylevel = trylevel;
 
   // "did_throw" will be set to true when an exception is being thrown.
   did_throw = false;
@@ -939,7 +932,7 @@ static char *get_loop_line(int c, void *cookie, int indent, bool do_concat)
     char *line;
     // First time inside the ":while"/":for": get line normally.
     if (cp->getline == NULL) {
-      line = getcmdline(c, 0L, indent, do_concat);
+      line = getcmdline(c, 0, indent, do_concat);
     } else {
       line = cp->getline(c, cp->cookie, indent, do_concat);
     }
@@ -1127,7 +1120,7 @@ static void get_wincmd_addr_type(const char *arg, exarg_T *eap)
   case 'd':
   case Ctrl_D:
     // window size or any count
-    eap->addr_type = ADDR_OTHER;  // -V1037
+    eap->addr_type = ADDR_OTHER;
     break;
 
   case Ctrl_HAT:
@@ -2033,7 +2026,7 @@ static char *do_one_cmd(char **cmdlinep, int flags, cstack_T *cstack, LineGetter
     while (ASCII_ISALNUM(*p)) {
       p++;
     }
-    p = xstrnsave(ea.cmd, (size_t)(p - ea.cmd));
+    p = xmemdupz(ea.cmd, (size_t)(p - ea.cmd));
     int ret = apply_autocmds(EVENT_CMDUNDEFINED, p, p, true, NULL);
     xfree(p);
     // If the autocommands did something and didn't cause an error, try
@@ -3124,7 +3117,7 @@ int cmd_exists(const char *const name)
   // For ":2match" and ":3match" we need to skip the number.
   exarg_T ea;
   ea.cmd = (char *)((*name == '2' || *name == '3') ? name + 1 : name);
-  ea.cmdidx = (cmdidx_T)0;
+  ea.cmdidx = 0;
   ea.flags = 0;
   int full = false;
   char *p = find_ex_command(&ea, &full);
@@ -3155,7 +3148,7 @@ void f_fullcommand(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   exarg_T ea;
   ea.cmd = (*name == '2' || *name == '3') ? name + 1 : name;
-  ea.cmdidx = (cmdidx_T)0;
+  ea.cmdidx = 0;
   ea.flags = 0;
   char *p = find_ex_command(&ea, NULL);
   if (p == NULL || ea.cmdidx == CMD_SIZE) {
@@ -3177,7 +3170,7 @@ cmdidx_T excmd_get_cmdidx(const char *cmd, size_t len)
   cmdidx_T idx;
 
   if (!one_letter_cmd(cmd, &idx)) {
-    for (idx = (cmdidx_T)0; (int)idx < CMD_SIZE; idx = (cmdidx_T)((int)idx + 1)) {
+    for (idx = 0; (int)idx < CMD_SIZE; idx = (cmdidx_T)((int)idx + 1)) {
       if (strncmp(cmdnames[(int)idx].cmd_name, cmd, len) == 0) {
         break;
       }
@@ -3431,7 +3424,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
         }
         searchcmdlen = 0;
         flags = silent ? 0 : SEARCH_HIS | SEARCH_MSG;
-        if (!do_search(NULL, c, c, cmd, 1L, flags, NULL)) {
+        if (!do_search(NULL, c, c, cmd, 1, flags, NULL)) {
           curwin->w_cursor = pos;
           cmd = NULL;
           goto error;
@@ -3468,7 +3461,7 @@ static linenr_T get_address(exarg_T *eap, char **ptr, cmd_addr_T addr_type, int 
         pos.coladd = 0;
         if (searchit(curwin, curbuf, &pos, NULL,
                      *cmd == '?' ? BACKWARD : FORWARD,
-                     "", 1L, SEARCH_MSG, i, NULL) != FAIL) {
+                     "", 1, SEARCH_MSG, i, NULL) != FAIL) {
           lnum = pos.lnum;
         } else {
           cmd = NULL;
@@ -5331,8 +5324,6 @@ static void ex_edit(exarg_T *eap)
 /// @param old_curwin  curwin before doing a split or NULL
 void do_exedit(exarg_T *eap, win_T *old_curwin)
 {
-  int n;
-
   // ":vi" command ends Ex mode.
   if (exmode_active && (eap->cmdidx == CMD_visual
                         || eap->cmdidx == CMD_view)) {
@@ -5383,7 +5374,7 @@ void do_exedit(exarg_T *eap, win_T *old_curwin)
     if (*eap->arg != NUL && text_or_buf_locked()) {
       return;
     }
-    n = readonlymode;
+    int n = readonlymode;
     if (eap->cmdidx == CMD_view || eap->cmdidx == CMD_sview) {
       readonlymode = true;
     } else if (eap->cmdidx == CMD_enew) {
@@ -5431,7 +5422,7 @@ void do_exedit(exarg_T *eap, win_T *old_curwin)
     if (eap->do_ecmd_cmd != NULL) {
       do_cmdline_cmd(eap->do_ecmd_cmd);
     }
-    n = curwin->w_arg_idx_invalid;
+    int n = curwin->w_arg_idx_invalid;
     check_arg_idx(curwin);
     if (n != curwin->w_arg_idx_invalid) {
       maketitle();
@@ -5554,13 +5545,13 @@ static void ex_read(exarg_T *eap)
       return;
     }
     i = readfile(curbuf->b_ffname, curbuf->b_fname,
-                 eap->line2, (linenr_T)0, (linenr_T)MAXLNUM, eap, 0, false);
+                 eap->line2, 0, (linenr_T)MAXLNUM, eap, 0, false);
   } else {
     if (vim_strchr(p_cpo, CPO_ALTREAD) != NULL) {
-      (void)setaltfname(eap->arg, eap->arg, (linenr_T)1);
+      (void)setaltfname(eap->arg, eap->arg, 1);
     }
     i = readfile(eap->arg, NULL,
-                 eap->line2, (linenr_T)0, (linenr_T)MAXLNUM, eap, 0, false);
+                 eap->line2, 0, (linenr_T)MAXLNUM, eap, 0, false);
   }
   if (i != OK) {
     if (!aborting()) {
@@ -5576,13 +5567,13 @@ static void ex_read(exarg_T *eap)
       } else {
         lnum = 1;
       }
-      if (*ml_get(lnum) == NUL && u_savedel(lnum, 1L) == OK) {
+      if (*ml_get(lnum) == NUL && u_savedel(lnum, 1) == OK) {
         ml_delete(lnum, false);
         if (curwin->w_cursor.lnum > 1
             && curwin->w_cursor.lnum >= lnum) {
           curwin->w_cursor.lnum--;
         }
-        deleted_lines_mark(lnum, 1L);
+        deleted_lines_mark(lnum, 1);
       }
     }
     redraw_curbuf_later(UPD_VALID);
@@ -5812,7 +5803,7 @@ static void ex_sleep(exarg_T *eap)
   case 'm':
     break;
   case NUL:
-    len *= 1000L; break;
+    len *= 1000; break;
   default:
     semsg(_(e_invarg2), eap->arg); return;
   }
@@ -5877,7 +5868,7 @@ static void ex_wincmd(exarg_T *eap)
     // Pass flags on for ":vertical wincmd ]".
     postponed_split_flags = cmdmod.cmod_split;
     postponed_split_tab = cmdmod.cmod_tab;
-    do_window(*eap->arg, eap->addr_count > 0 ? eap->line2 : 0L, xchar);
+    do_window(*eap->arg, eap->addr_count > 0 ? eap->line2 : 0, xchar);
     postponed_split_flags = 0;
     postponed_split_tab = 0;
   }
@@ -6501,8 +6492,7 @@ static void ex_normal(exarg_T *eap)
 
     // Count the number of characters to be escaped.
     int l;
-    char *p;
-    for (p = eap->arg; *p != NUL; p++) {
+    for (char *p = eap->arg; *p != NUL; p++) {
       for (l = utfc_ptr2len(p) - 1; l > 0; l--) {
         if (*++p == (char)K_SPECIAL) {  // trailbyte K_SPECIAL
           len += 2;
@@ -6512,7 +6502,7 @@ static void ex_normal(exarg_T *eap)
     if (len > 0) {
       arg = xmalloc(strlen(eap->arg) + (size_t)len + 1);
       len = 0;
-      for (p = eap->arg; *p != NUL; p++) {
+      for (char *p = eap->arg; *p != NUL; p++) {
         arg[len++] = *p;
         for (l = utfc_ptr2len(p) - 1; l > 0; l--) {
           arg[len++] = *++p;
@@ -6630,9 +6620,9 @@ void exec_normal(bool was_typed)
 
 static void ex_checkpath(exarg_T *eap)
 {
-  find_pattern_in_path(NULL, 0, 0, false, false, CHECK_PATH, 1L,
+  find_pattern_in_path(NULL, 0, 0, false, false, CHECK_PATH, 1,
                        eap->forceit ? ACTION_SHOW_ALL : ACTION_SHOW,
-                       (linenr_T)1, (linenr_T)MAXLNUM);
+                       1, (linenr_T)MAXLNUM);
 }
 
 /// ":psearch"
@@ -6986,7 +6976,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
       break;
 
     case SPEC_CFILE:            // file name under cursor
-      result = file_name_at_cursor(FNAME_MESS|FNAME_HYP, 1L, NULL);
+      result = file_name_at_cursor(FNAME_MESS|FNAME_HYP, 1, NULL);
       if (result == NULL) {
         *errormsg = "";
         return NULL;
@@ -7121,7 +7111,7 @@ char *eval_vars(char *src, const char *srcstart, size_t *usedlen, linenr_T *lnum
     }
     result = NULL;
   } else {
-    result = xstrnsave(result, resultlen);
+    result = xmemdupz(result, resultlen);
   }
   xfree(resultbuf);
   return result;

@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 #include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -678,7 +675,7 @@ int tv_list_assign_range(list_T *const dest, list_T *const src, const int idx1_a
   listitem_T *src_li;
 
   // Check whether any of the list items is locked before making any changes.
-  long idx = idx1;
+  int idx = idx1;
   listitem_T *dest_li = first_li;
   for (src_li = tv_list_first(src); src_li != NULL && dest_li != NULL;) {
     if (value_check_lock(TV_LIST_ITEM_TV(dest_li)->v_lock, varname, TV_CSTRING)) {
@@ -738,7 +735,7 @@ int tv_list_assign_range(list_T *const dest, list_T *const src, const int idx1_a
 /// @param[in] maxdepth   Maximum depth that will be flattened
 ///
 /// @return OK or FAIL
-void tv_list_flatten(list_T *list, listitem_T *first, long maxitems, long maxdepth)
+void tv_list_flatten(list_T *list, listitem_T *first, int64_t maxitems, int64_t maxdepth)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   listitem_T *item;
@@ -4422,7 +4419,7 @@ const char *tv_get_string_buf_chk(const typval_T *const tv, char *const buf)
 {
   switch (tv->v_type) {
   case VAR_NUMBER:
-    snprintf(buf, NUMBUFLEN, "%" PRIdVARNUMBER, tv->vval.v_number);  // -V576
+    snprintf(buf, NUMBUFLEN, "%" PRIdVARNUMBER, tv->vval.v_number);
     return buf;
   case VAR_FLOAT:
     vim_snprintf(buf, NUMBUFLEN, "%g", tv->vval.v_float);

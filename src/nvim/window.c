@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 #include <assert.h>
 #include <ctype.h>
 #include <inttypes.h>
@@ -228,7 +225,7 @@ void do_window(int nchar, int Prenum, int xchar)
 
     if (!curbuf_locked() && win_split(0, 0) == OK) {
       (void)buflist_getfile(Prenum == 0 ? curwin->w_alt_fnum : Prenum,
-                            (linenr_T)0, GETF_ALT, false);
+                            0, GETF_ALT, false);
     }
     break;
 
@@ -586,7 +583,7 @@ wingotofile:
     }
 
     // Make a copy, if the line was changed it will be freed.
-    ptr = xstrnsave(ptr, len);
+    ptr = xmemdupz(ptr, len);
 
     find_pattern_in_path(ptr, 0, len, true, Prenum == 0,
                          type, Prenum1, ACTION_SPLIT, 1, MAXLNUM);
@@ -2759,10 +2756,11 @@ static bool close_last_window_tabpage(win_T *win, bool free_buf, tabpage_T *prev
   return true;
 }
 
-/// Close the buffer of "win" and unload it if "free_buf" is true.
+/// Close the buffer of "win" and unload it if "action" is DOBUF_UNLOAD.
+/// "action" can also be zero (do nothing).
 /// "abort_if_last" is passed to close_buffer(): abort closing if all other
 /// windows are closed.
-static void win_close_buffer(win_T *win, bool free_buf, bool abort_if_last)
+static void win_close_buffer(win_T *win, int action, bool abort_if_last)
 {
   // Free independent synblock before the buffer is freed.
   if (win->w_buffer != NULL) {
@@ -2781,7 +2779,7 @@ static void win_close_buffer(win_T *win, bool free_buf, bool abort_if_last)
     bufref_T bufref;
     set_bufref(&bufref, curbuf);
     win->w_closing = true;
-    close_buffer(win, win->w_buffer, free_buf ? DOBUF_UNLOAD : 0, abort_if_last, true);
+    close_buffer(win, win->w_buffer, action, abort_if_last, true);
     if (win_valid_any_tab(win)) {
       win->w_closing = false;
     }
@@ -2911,7 +2909,7 @@ int win_close(win_T *win, bool free_buf, bool force)
     return OK;
   }
 
-  win_close_buffer(win, free_buf, true);
+  win_close_buffer(win, free_buf ? DOBUF_UNLOAD : 0, true);
 
   if (only_one_window() && win_valid(win) && win->w_buffer == NULL
       && (last_window(win) || curtab != prev_curtab
@@ -4079,7 +4077,7 @@ static int win_alloc_firstwin(win_T *oldwin)
   if (oldwin == NULL) {
     // Very first window, need to create an empty buffer for it and
     // initialize from scratch.
-    curbuf = buflist_new(NULL, NULL, 1L, BLN_LISTED);
+    curbuf = buflist_new(NULL, NULL, 1, BLN_LISTED);
     if (curbuf == NULL) {
       return FAIL;
     }
@@ -6458,7 +6456,7 @@ void win_drag_vsep_line(win_T *dragwin, int offset)
   redraw_all_later(UPD_NOT_VALID);
 }
 
-#define FRACTION_MULT   16384L
+#define FRACTION_MULT   16384
 
 // Set wp->w_fraction for the current w_wrow and w_height.
 // Has no effect when the window is less than two lines.
@@ -6468,7 +6466,7 @@ void set_fraction(win_T *wp)
     // When cursor is in the first line the percentage is computed as if
     // it's halfway that line.  Thus with two lines it is 25%, with three
     // lines 17%, etc.  Similarly for the last line: 75%, 83%, etc.
-    wp->w_fraction = (int)(wp->w_wrow * FRACTION_MULT + FRACTION_MULT / 2) / wp->w_height_inner;
+    wp->w_fraction = (wp->w_wrow * FRACTION_MULT + FRACTION_MULT / 2) / wp->w_height_inner;
   }
 }
 
@@ -6619,7 +6617,7 @@ void scroll_to_fraction(win_T *wp, int prev_height)
     if (lnum < 1) {             // can happen when starting up
       lnum = 1;
     }
-    wp->w_wrow = (int)(wp->w_fraction * height - 1L) / FRACTION_MULT;
+    wp->w_wrow = (wp->w_fraction * height - 1) / FRACTION_MULT;
     int line_size = plines_win_col(wp, lnum, wp->w_cursor.col) - 1;
     int sline = wp->w_wrow - line_size;
 
@@ -6713,7 +6711,7 @@ void win_set_inner_size(win_T *wp, bool valid_cursor)
         // call win_new_height() recursively.
         validate_cursor();
       }
-      if (wp->w_height_inner != prev_height) {  // -V547
+      if (wp->w_height_inner != prev_height) {
         return;  // Recursive call already changed the size, bail out.
       }
       if (wp->w_wrow != wp->w_prev_fraction_row) {

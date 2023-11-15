@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // cmdhist.c: Functions for the history of the command-line.
 
 #include <assert.h>
@@ -463,7 +460,7 @@ static int del_history_entry(int histype, char *str)
     if (hisptr->hisstr == NULL) {
       break;
     }
-    if (vim_regexec(&regmatch, hisptr->hisstr, (colnr_T)0)) {
+    if (vim_regexec(&regmatch, hisptr->hisstr, 0)) {
       found = true;
       hist_free_entry(hisptr);
     } else {
@@ -522,14 +519,12 @@ static int del_history_idx(int histype, int idx)
 /// "histadd()" function
 void f_histadd(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
-  HistoryType histype;
-
   rettv->vval.v_number = false;
   if (check_secure()) {
     return;
   }
   const char *str = tv_get_string_chk(&argvars[0]);  // NULL on type error
-  histype = str != NULL ? get_histtype(str, strlen(str), false) : HIST_INVALID;
+  HistoryType histype = str != NULL ? get_histtype(str, strlen(str), false) : HIST_INVALID;
   if (histype == HIST_INVALID) {
     return;
   }
@@ -608,7 +603,6 @@ void ex_history(exarg_T *eap)
   int histype2 = HIST_CMD;
   int hisidx1 = 1;
   int hisidx2 = -1;
-  int i;
   char *end;
   char *arg = eap->arg;
 
@@ -664,7 +658,7 @@ void ex_history(exarg_T *eap)
       k = (-k > hislen) ? 0 : hist[(hislen + k + idx + 1) % hislen].hisnum;
     }
     if (idx >= 0 && j <= k) {
-      for (i = idx + 1; !got_int; i++) {
+      for (int i = idx + 1; !got_int; i++) {
         if (i == hislen) {
           i = 0;
         }

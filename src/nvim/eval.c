@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // eval.c: Expression evaluation.
 
 #include <assert.h>
@@ -89,6 +86,8 @@
 // TODO(ZyX-I): Remove DICT_MAXNEST, make users be non-recursive instead
 
 #define DICT_MAXNEST 100        // maximum nesting of lists and dicts
+
+#define MAX_CALLBACK_DEPTH 20
 
 static const char *e_missbrac = N_("E111: Missing ']'");
 static const char *e_list_end = N_("E697: Missing end of List ']': %s");
@@ -454,8 +453,8 @@ void eval_init(void)
   set_vim_var_dict(VV_EVENT, tv_dict_alloc_lock(VAR_FIXED));
   set_vim_var_list(VV_ERRORS, tv_list_alloc(kListLenUnknown));
   set_vim_var_nr(VV_STDERR,   CHAN_STDERR);
-  set_vim_var_nr(VV_SEARCHFORWARD, 1L);
-  set_vim_var_nr(VV_HLSEARCH, 1L);
+  set_vim_var_nr(VV_SEARCHFORWARD, 1);
+  set_vim_var_nr(VV_HLSEARCH, 1);
   set_vim_var_nr(VV_COUNT1, 1);
   set_vim_var_nr(VV_TYPE_NUMBER, VAR_TYPE_NUMBER);
   set_vim_var_nr(VV_TYPE_STRING, VAR_TYPE_STRING);
@@ -1633,7 +1632,7 @@ char *get_lval(char *const name, typval_T *const rettv, lval_T *const lp, const 
         if (len == -1) {
           lp->ll_newkey = xstrdup(key);
         } else {
-          lp->ll_newkey = xstrnsave(key, (size_t)len);
+          lp->ll_newkey = xmemdupz(key, (size_t)len);
         }
         tv_clear(&var1);
         break;
@@ -1868,14 +1867,13 @@ notify:
 void *eval_for_line(const char *arg, bool *errp, exarg_T *eap, evalarg_T *const evalarg)
 {
   forinfo_T *fi = xcalloc(1, sizeof(forinfo_T));
-  const char *expr;
   typval_T tv;
   list_T *l;
   const bool skip = !(evalarg->eval_flags & EVAL_EVALUATE);
 
   *errp = true;  // Default: there is an error.
 
-  expr = skip_var_list(arg, &fi->fi_varcount, &fi->fi_semicolon);
+  const char *expr = skip_var_list(arg, &fi->fi_varcount, &fi->fi_semicolon);
   if (expr == NULL) {
     return fi;
   }
@@ -1966,7 +1964,7 @@ bool next_for_item(void *fi_void, char *arg)
     typval_T tv;
     tv.v_type = VAR_STRING;
     tv.v_lock = VAR_FIXED;
-    tv.vval.v_string = xstrnsave(fi->fi_string + fi->fi_byte_idx, (size_t)len);
+    tv.vval.v_string = xmemdupz(fi->fi_string + fi->fi_byte_idx, (size_t)len);
     fi->fi_byte_idx += len;
     const int result
       = ex_let_vars(arg, &tv, true, fi->fi_semicolon, fi->fi_varcount, false, NULL) == OK;
@@ -2006,13 +2004,12 @@ void set_context_for_expression(expand_T *xp, char *arg, cmdidx_T cmdidx)
   FUNC_ATTR_NONNULL_ALL
 {
   bool got_eq = false;
-  char *p;
 
   if (cmdidx == CMD_let || cmdidx == CMD_const) {
     xp->xp_context = EXPAND_USER_VARS;
     if (strpbrk(arg, "\"'+-*/%.=!?~|&$([<>,#") == NULL) {
       // ":let var1 var2 ...": find last space.
-      for (p = arg + strlen(arg); p >= arg;) {
+      for (char *p = arg + strlen(arg); p >= arg;) {
         xp->xp_pattern = p;
         MB_PTR_BACK(arg, p);
         if (ascii_iswhite(*p)) {
@@ -2241,7 +2238,7 @@ int pattern_match(const char *pat, const char *text, bool ic)
   regmatch.regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
   if (regmatch.regprog != NULL) {
     regmatch.rm_ic = ic;
-    matches = vim_regexec_nl(&regmatch, text, (colnr_T)0);
+    matches = vim_regexec_nl(&regmatch, text, 0);
     vim_regfree(regmatch.regprog);
   }
   p_cpo = save_cpo;
@@ -2344,14 +2341,12 @@ void clear_evalarg(evalarg_T *evalarg, exarg_T *eap)
 /// @return OK or FAIL.
 int eval0(char *arg, typval_T *rettv, exarg_T *eap, evalarg_T *const evalarg)
 {
-  int ret;
-  char *p;
   const int did_emsg_before = did_emsg;
   const int called_emsg_before = called_emsg;
   bool end_error = false;
 
-  p = skipwhite(arg);
-  ret = eval1(&p, rettv, evalarg);
+  char *p = skipwhite(arg);
+  int ret = eval1(&p, rettv, evalarg);
 
   if (ret != FAIL) {
     end_error = !ends_excmd(*p);
@@ -4893,7 +4888,7 @@ static int get_literal_key(char **arg, typval_T *tv)
   }
   for (p = *arg; ASCII_ISALNUM(*p) || *p == '_' || *p == '-'; p++) {}
   tv->v_type = VAR_STRING;
-  tv->vval.v_string = xstrnsave(*arg, (size_t)(p - *arg));
+  tv->vval.v_string = xmemdupz(*arg, (size_t)(p - *arg));
 
   *arg = skipwhite(p);
   return OK;
@@ -5242,7 +5237,7 @@ static void filter_map_string(const char *str, filtermap_T filtermap, typval_T *
     typval_T tv = {
       .v_type = VAR_STRING,
       .v_lock = VAR_UNLOCKED,
-      .vval.v_string = xstrnsave(p, (size_t)len),
+      .vval.v_string = xmemdupz(p, (size_t)len),
     };
 
     vimvars[VV_KEY].vv_nr = idx;
@@ -6064,7 +6059,7 @@ bool callback_call(Callback *const callback, const int argcount_in, typval_T *co
                    typval_T *const rettv)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (callback_depth > p_mfd) {
+  if (callback_depth > MAX_CALLBACK_DEPTH) {
     emsg(_(e_command_too_recursive));
     return false;
   }
@@ -6629,14 +6624,14 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
     }
 
     // Get the line number.
-    pos.lnum = (linenr_T)tv_list_find_nr(l, 0L, &error);
+    pos.lnum = (linenr_T)tv_list_find_nr(l, 0, &error);
     if (error || pos.lnum <= 0 || pos.lnum > curbuf->b_ml.ml_line_count) {
       // Invalid line number.
       return NULL;
     }
 
     // Get the column number.
-    pos.col = (colnr_T)tv_list_find_nr(l, 1L, &error);
+    pos.col = (colnr_T)tv_list_find_nr(l, 1, &error);
     if (error) {
       return NULL;
     }
@@ -6648,7 +6643,7 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
     }
 
     // We accept "$" for the column number: last column.
-    listitem_T *li = tv_list_find(l, 1L);
+    listitem_T *li = tv_list_find(l, 1);
     if (li != NULL && TV_LIST_ITEM_TV(li)->v_type == VAR_STRING
         && TV_LIST_ITEM_TV(li)->vval.v_string != NULL
         && strcmp(TV_LIST_ITEM_TV(li)->vval.v_string, "$") == 0) {
@@ -6663,7 +6658,7 @@ pos_T *var2fpos(const typval_T *const tv, const bool dollar_lnum, int *const ret
     pos.col--;
 
     // Get the virtual offset.  Defaults to zero.
-    pos.coladd = (colnr_T)tv_list_find_nr(l, 2L, &error);
+    pos.coladd = (colnr_T)tv_list_find_nr(l, 2, &error);
     if (error) {
       pos.coladd = 0;
     }
@@ -7240,10 +7235,9 @@ void set_vim_var_tv(const VimVarIndex idx, typval_T *const tv)
 void set_argv_var(char **argv, int argc)
 {
   list_T *l = tv_list_alloc(argc);
-  int i;
 
   tv_list_set_lock(l, VAR_FIXED);
-  for (i = 0; i < argc; i++) {
+  for (int i = 0; i < argc; i++) {
     tv_list_append_string(l, (const char *const)argv[i], -1);
     TV_LIST_ITEM_TV(tv_list_last(l))->v_lock = VAR_FIXED;
   }
@@ -7483,7 +7477,7 @@ char *char_from_string(const char *str, varnumber_T index)
   if (nbyte >= slen) {
     return NULL;
   }
-  return xstrnsave(str + nbyte, (size_t)utf_ptr2len(str + nbyte));
+  return xmemdupz(str + nbyte, (size_t)utf_ptr2len(str + nbyte));
 }
 
 /// Get the byte index for character index "idx" in string "str" with length
@@ -7544,7 +7538,7 @@ char *string_slice(const char *str, varnumber_T first, varnumber_T last, bool ex
   if (start_byte >= (ssize_t)slen || end_byte <= start_byte) {
     return NULL;
   }
-  return xstrnsave(str + start_byte, (size_t)(end_byte - start_byte));
+  return xmemdupz(str + start_byte, (size_t)(end_byte - start_byte));
 }
 
 /// Handle:
@@ -8586,13 +8580,13 @@ repeat:
       // find end of pattern
       p = vim_strchr(s, sep);
       if (p != NULL) {
-        char *const pat = xstrnsave(s, (size_t)(p - s));
+        char *const pat = xmemdupz(s, (size_t)(p - s));
         s = p + 1;
         // find end of substitution
         p = vim_strchr(s, sep);
         if (p != NULL) {
-          char *const sub = xstrnsave(s, (size_t)(p - s));
-          char *const str = xstrnsave(*fnamep, *fnamelen);
+          char *const sub = xmemdupz(s, (size_t)(p - s));
+          char *const str = xmemdupz(*fnamep, *fnamelen);
           *usedlen = (size_t)(p + 1 - src);
           s = do_string_sub(str, pat, sub, NULL, flags);
           *fnamep = s;
@@ -8794,7 +8788,7 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments, boo
     return (typval_T){
       .v_type = VAR_NUMBER,
       .v_lock = VAR_UNLOCKED,
-      .vval.v_number = (varnumber_T)0
+      .vval.v_number = 0
     };
   }
 

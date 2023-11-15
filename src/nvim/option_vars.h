@@ -1,5 +1,4 @@
-#ifndef NVIM_OPTION_VARS_H
-#define NVIM_OPTION_VARS_H
+#pragma once
 
 #include "nvim/macros.h"
 #include "nvim/types.h"
@@ -738,6 +737,7 @@ EXTERN OptInt p_uc;             ///< 'updatecount'
 EXTERN OptInt p_ut;             ///< 'updatetime'
 EXTERN char *p_shada;           ///< 'shada'
 EXTERN char *p_shadafile;       ///< 'shadafile'
+EXTERN int p_termsync;          ///< 'termsync'
 EXTERN char *p_vsts;            ///< 'varsofttabstop'
 EXTERN char *p_vts;             ///< 'vartabstop'
 EXTERN char *p_vdir;            ///< 'viewdir'
@@ -946,5 +946,3 @@ enum {
 #define MAX_NUMBERWIDTH 20      // used for 'numberwidth' and 'statuscolumn'
 
 #define TABSTOP_MAX 9999
-
-#endif  // NVIM_OPTION_VARS_H

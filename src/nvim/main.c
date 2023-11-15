@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // Make sure extern symbols are exported on Windows
 #ifdef WIN32
 # define EXTERN __declspec(dllexport)
@@ -413,14 +410,7 @@ int main(int argc, char **argv)
 
   open_script_files(&params);
 
-  // Default mappings (incl. menus) & autocommands
-  Error err = ERROR_INIT;
-  Object o = NLUA_EXEC_STATIC("return vim._init_defaults()",
-                              (Array)ARRAY_DICT_INIT, &err);
-  assert(!ERROR_SET(&err));
-  api_clear_error(&err);
-  assert(o.type == kObjectTypeNil);
-  api_free_object(o);
+  nlua_init_defaults();
 
   TIME_MSG("init default mappings & autocommands");
 
@@ -585,7 +575,7 @@ int main(int argc, char **argv)
   // 'autochdir' has been postponed.
   do_autochdir();
 
-  set_vim_var_nr(VV_VIM_DID_ENTER, 1L);
+  set_vim_var_nr(VV_VIM_DID_ENTER, 1);
   apply_autocmds(EVENT_VIMENTER, NULL, NULL, false, curbuf);
   TIME_MSG("VimEnter autocommands");
   if (use_remote_ui) {
@@ -610,7 +600,7 @@ int main(int argc, char **argv)
   // scrollbind, sync the scrollbind now.
   if (curwin->w_p_diff && curwin->w_p_scb) {
     update_topline(curwin);
-    check_scrollbind((linenr_T)0, 0L);
+    check_scrollbind(0, 0);
     TIME_MSG("diff scrollbinding");
   }
 
@@ -873,7 +863,7 @@ void preserve_exit(const char *errmsg)
 static int get_number_arg(const char *p, int *idx, int def)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  if (ascii_isdigit(p[*idx])) {  // -V522
+  if (ascii_isdigit(p[*idx])) {
     def = atoi(&(p[*idx]));
     while (ascii_isdigit(p[*idx])) {
       *idx = *idx + 1;
@@ -1027,7 +1017,7 @@ static void command_line_scan(mparm_T *parmp)
   int argv_idx;                         // index in argv[n][]
   bool had_minmin = false;              // found "--" argument
   int want_argument;                    // option argument with argument
-  long n;
+  int n;
 
   argc--;
   argv++;
@@ -1759,7 +1749,6 @@ static void create_windows(mparm_T *parmp)
 static void edit_buffers(mparm_T *parmp, char *cwd)
 {
   int arg_idx;                          // index in argument list
-  int i;
   bool advance = true;
   win_T *win;
   char *p_shm_save = NULL;
@@ -1775,7 +1764,7 @@ static void edit_buffers(mparm_T *parmp, char *cwd)
   }
 
   arg_idx = 1;
-  for (i = 1; i < parmp->window_count; i++) {
+  for (int i = 1; i < parmp->window_count; i++) {
     if (cwd != NULL) {
       os_chdir(cwd);
     }
@@ -1879,7 +1868,6 @@ static void exe_pre_commands(mparm_T *parmp)
 {
   char **cmds = parmp->pre_commands;
   int cnt = parmp->n_pre_commands;
-  int i;
 
   if (cnt <= 0) {
     return;
@@ -1888,7 +1876,7 @@ static void exe_pre_commands(mparm_T *parmp)
   curwin->w_cursor.lnum = 0;     // just in case..
   estack_push(ETYPE_ARGS, _("pre-vimrc command line"), 0);
   current_sctx.sc_sid = SID_CMDARG;
-  for (i = 0; i < cnt; i++) {
+  for (int i = 0; i < cnt; i++) {
     do_cmdline_cmd(cmds[i]);
   }
   estack_pop();
@@ -1899,8 +1887,6 @@ static void exe_pre_commands(mparm_T *parmp)
 // Execute "+", "-c" and "-S" arguments.
 static void exe_commands(mparm_T *parmp)
 {
-  int i;
-
   // We start commands on line 0, make "vim +/pat file" match a
   // pattern on line 1.  But don't move the cursor when an autocommand
   // with g`" was used.
@@ -1911,7 +1897,7 @@ static void exe_commands(mparm_T *parmp)
   estack_push(ETYPE_ARGS, "command line", 0);
   current_sctx.sc_sid = SID_CARG;
   current_sctx.sc_seq = 0;
-  for (i = 0; i < parmp->n_commands; i++) {
+  for (int i = 0; i < parmp->n_commands; i++) {
     do_cmdline_cmd(parmp->commands[i]);
     if (parmp->cmds_tofree[i]) {
       xfree(parmp->commands[i]);

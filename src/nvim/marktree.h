@@ -1,5 +1,4 @@
-#ifndef NVIM_MARKTREE_H
-#define NVIM_MARKTREE_H
+#pragma once
 
 #include <assert.h>
 #include <stdbool.h>
@@ -77,18 +76,20 @@ typedef struct {
 // orphaned: the other side of this paired mark was deleted. this mark must be deleted very soon!
 #define MT_FLAG_ORPHANED (((uint16_t)1) << 3)
 #define MT_FLAG_HL_EOL (((uint16_t)1) << 4)
+#define MT_FLAG_NO_UNDO (((uint16_t)1) << 5)
+#define MT_FLAG_INVALIDATE (((uint16_t)1) << 6)
+#define MT_FLAG_INVALID (((uint16_t)1) << 7)
 
 #define DECOR_LEVELS 4
-#define MT_FLAG_DECOR_OFFSET 5
+#define MT_FLAG_DECOR_OFFSET 8
 #define MT_FLAG_DECOR_MASK (((uint16_t)(DECOR_LEVELS - 1)) << MT_FLAG_DECOR_OFFSET)
-
-// next flag is (((uint16_t)1) << 6)
 
 // These _must_ be last to preserve ordering of marks
 #define MT_FLAG_RIGHT_GRAVITY (((uint16_t)1) << 14)
 #define MT_FLAG_LAST (((uint16_t)1) << 15)
 
-#define MT_FLAG_EXTERNAL_MASK (MT_FLAG_DECOR_MASK | MT_FLAG_RIGHT_GRAVITY | MT_FLAG_HL_EOL)
+#define MT_FLAG_EXTERNAL_MASK (MT_FLAG_DECOR_MASK | MT_FLAG_RIGHT_GRAVITY | MT_FLAG_HL_EOL \
+                               | MT_FLAG_NO_UNDO | MT_FLAG_INVALIDATE | MT_FLAG_INVALID)
 
 // this is defined so that start and end of the same range have adjacent ids
 #define MARKTREE_END_FLAG ((uint64_t)1)
@@ -127,15 +128,34 @@ static inline bool mt_right(MTKey key)
   return key.flags & MT_FLAG_RIGHT_GRAVITY;
 }
 
+static inline bool mt_no_undo(MTKey key)
+{
+  return key.flags & MT_FLAG_NO_UNDO;
+}
+
+static inline bool mt_invalidate(MTKey key)
+{
+  return key.flags & MT_FLAG_INVALIDATE;
+}
+
+static inline bool mt_invalid(MTKey key)
+{
+  return key.flags & MT_FLAG_INVALID;
+}
+
 static inline uint8_t marktree_decor_level(MTKey key)
 {
   return (uint8_t)((key.flags&MT_FLAG_DECOR_MASK) >> MT_FLAG_DECOR_OFFSET);
 }
 
-static inline uint16_t mt_flags(bool right_gravity, uint8_t decor_level)
+static inline uint16_t mt_flags(bool right_gravity, bool hl_eol, bool no_undo, bool invalidate,
+                                uint8_t decor_level)
 {
   assert(decor_level < DECOR_LEVELS);
   return (uint16_t)((right_gravity ? MT_FLAG_RIGHT_GRAVITY : 0)
+                    | (hl_eol ? MT_FLAG_HL_EOL : 0)
+                    | (no_undo ? MT_FLAG_NO_UNDO : 0)
+                    | (invalidate ? MT_FLAG_INVALIDATE : 0)
                     | (decor_level << MT_FLAG_DECOR_OFFSET));
 }
 
@@ -169,5 +189,3 @@ typedef struct {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "marktree.h.generated.h"
 #endif
-
-#endif  // NVIM_MARKTREE_H

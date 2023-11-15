@@ -1,5 +1,4 @@
-#ifndef NVIM_GRID_H
-#define NVIM_GRID_H
+#pragma once
 
 #include <stdbool.h>
 #include <string.h>
@@ -29,6 +28,7 @@ EXTERN bool resizing_screen INIT( = 0);
 EXTERN schar_T *linebuf_char INIT( = NULL);
 EXTERN sattr_T *linebuf_attr INIT( = NULL);
 EXTERN colnr_T *linebuf_vcol INIT( = NULL);
+EXTERN char *linebuf_scratch INIT( = NULL);
 
 // Low-level functions to manipulate individual character cells on the
 // screen grid.
@@ -58,4 +58,3 @@ static inline schar_T schar_from_char(int c)
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "grid.h.generated.h"
 #endif
-#endif  // NVIM_GRID_H

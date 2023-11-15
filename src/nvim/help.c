@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // help.c: functions for Vim help
 
 #include <stdbool.h>
@@ -58,8 +55,6 @@ void ex_help(exarg_T *eap)
   char **matches;
   int empty_fnum = 0;
   int alt_fnum = 0;
-  buf_T *buf;
-  int len;
   const bool old_KeyTyped = KeyTyped;
 
   if (eap != NULL) {
@@ -108,7 +103,7 @@ void ex_help(exarg_T *eap)
   if (n != FAIL && lang != NULL) {
     // Find first item with the requested language.
     for (i = 0; i < num_matches; i++) {
-      len = (int)strlen(matches[i]);
+      int len = (int)strlen(matches[i]);
       if (len > 3 && matches[i][len - 3] == '@'
           && STRICMP(matches[i] + len - 2, lang) == 0) {
         break;
@@ -199,7 +194,7 @@ void ex_help(exarg_T *eap)
   // may have jumped to another window, check that the buffer is not in a
   // window.
   if (empty_fnum != 0 && curbuf->b_fnum != empty_fnum) {
-    buf = buflist_findnr(empty_fnum);
+    buf_T *buf = buflist_findnr(empty_fnum);
     if (buf != NULL && buf->b_nwindows == 0) {
       wipe_buffer(buf, true);
     }
@@ -650,9 +645,6 @@ void prepare_help_buffer(void)
 /// highlighting is not used.
 void fix_help_buffer(void)
 {
-  linenr_T lnum;
-  char *line;
-
   // Set filetype to "help".
   if (strcmp(curbuf->b_p_ft, "help") != 0) {
     curbuf->b_ro_locked++;
@@ -662,8 +654,8 @@ void fix_help_buffer(void)
 
   if (!syntax_present(curwin)) {
     bool in_example = false;
-    for (lnum = 1; lnum <= curbuf->b_ml.ml_line_count; lnum++) {
-      line = ml_get_buf(curbuf, lnum);
+    for (linenr_T lnum = 1; lnum <= curbuf->b_ml.ml_line_count; lnum++) {
+      char *line = ml_get_buf(curbuf, lnum);
       const size_t len = strlen(line);
       if (in_example && len > 0 && !ascii_iswhite(line[0])) {
         // End of example: non-white or '<' in first column.
@@ -698,8 +690,8 @@ void fix_help_buffer(void)
           && ASCII_ISALPHA(fname[6])
           && TOLOWER_ASC(fname[7]) == 'x'
           && fname[8] == NUL)) {
-    for (lnum = 1; lnum < curbuf->b_ml.ml_line_count; lnum++) {
-      line = ml_get_buf(curbuf, lnum);
+    for (linenr_T lnum = 1; lnum < curbuf->b_ml.ml_line_count; lnum++) {
+      char *line = ml_get_buf(curbuf, lnum);
       if (strstr(line, "*local-additions*") == NULL) {
         continue;
       }
@@ -823,7 +815,7 @@ void fix_help_buffer(void)
                 }
                 convert_setup(&vc, NULL, NULL);
 
-                ml_append(lnum, cp, (colnr_T)0, false);
+                ml_append(lnum, cp, 0, false);
                 if (cp != IObuff) {
                   xfree(cp);
                 }
@@ -838,7 +830,7 @@ void fix_help_buffer(void)
       }
       linenr_T appended = lnum - lnum_start;
       if (appended) {
-        mark_adjust(lnum_start + 1, (linenr_T)MAXLNUM, appended, 0L, kExtmarkUndo);
+        mark_adjust(lnum_start + 1, (linenr_T)MAXLNUM, appended, 0, kExtmarkUndo);
         buf_redraw_changed_lines_later(curbuf, lnum_start + 1, lnum_start + 1, appended);
       }
       break;

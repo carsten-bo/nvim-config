@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 #include <assert.h>
 #include <inttypes.h>
 #include <msgpack/object.h>
@@ -2503,9 +2500,9 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer, ShaDaReadDef
 
   // Initialize history merger
   for (HistoryType i = 0; i < HIST_COUNT; i++) {
-    long num_saved = get_shada_parameter(hist_type2char(i));
+    int num_saved = get_shada_parameter(hist_type2char(i));
     if (num_saved == -1) {
-      num_saved = (long)p_hi;
+      num_saved = (int)p_hi;
     }
     if (num_saved > 0) {
       dump_history = true;
@@ -3338,7 +3335,6 @@ static ShaDaReadResult msgpack_read_uint64(ShaDaReadDef *const sd_reader, const 
 #define ID(s) s
 #define BINDUP(b) xmemdupz((b).ptr, (b).size)
 #define TOINT(s) ((int)(s))
-#define TOLONG(s) ((long)(s))
 #define TOCHAR(s) ((char)(s))
 #define TOU8(s) ((uint8_t)(s))
 #define TOSIZE(s) ((size_t)(s))
@@ -3897,7 +3893,7 @@ shada_read_next_item_start:
           // XXX: Temporarily reassign `i` because the macros depend on it.
           const size_t j = i;
           {
-            for (i = 0; i < unpacked_2.data.via.map.size; i++) {  // -V535
+            for (i = 0; i < unpacked_2.data.via.map.size; i++) {
               CHECK_KEY_IS_STR(unpacked_2, "buffer list entry")
               INTEGER_KEY(unpacked_2, "buffer list entry", KEY_LNUM,
                           entry->data.buffer_list.buffers[j].pos.lnum)
@@ -3964,7 +3960,6 @@ shada_read_next_item_error:
 #undef BINDUP
 #undef TOCHAR
 #undef TOINT
-#undef TOLONG
 #undef TYPED_KEY
 #undef INT_KEY
 #undef INTEGER_KEY

@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 #include <assert.h>
 #include <inttypes.h>
 #include <math.h>
@@ -488,10 +485,8 @@ void sort_strings(char **files, int count)
 bool has_non_ascii(const char *s)
   FUNC_ATTR_PURE
 {
-  const char *p;
-
   if (s != NULL) {
-    for (p = s; *p != NUL; p++) {
+    for (const char *p = s; *p != NUL; p++) {
       if ((uint8_t)(*p) >= 128) {
         return true;
       }
@@ -603,7 +598,7 @@ static const void *tv_ptr(const typval_T *const tvs, int *const idxp)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
 #define OFF(attr) offsetof(union typval_vval_union, attr)
-  STATIC_ASSERT(OFF(v_string) == OFF(v_list)  // -V568
+  STATIC_ASSERT(OFF(v_string) == OFF(v_list)
                 && OFF(v_string) == OFF(v_dict)
                 && OFF(v_string) == OFF(v_partial)
                 && sizeof(tvs[0].vval.v_string) == sizeof(tvs[0].vval.v_list)
@@ -1967,7 +1962,6 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap_st
           assert(str_arg_l < sizeof(tmp));
 
           if (remove_trailing_zeroes) {
-            int i;
             char *tp;
 
             // using %g or %G: remove superfluous zeroes
@@ -1982,7 +1976,7 @@ int vim_vsnprintf_typval(char *str, size_t str_m, const char *fmt, va_list ap_st
                   STRMOVE(tp + 1, tp + 2);
                   str_arg_l--;
                 }
-                i = (tp[1] == '-') ? 2 : 1;
+                int i = (tp[1] == '-') ? 2 : 1;
                 while (tp[i] == '0') {
                   // change "1.0e07" to "1.0e7"
                   STRMOVE(tp + i, tp + i + 1);
@@ -2646,7 +2640,7 @@ void f_strcharpart(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   }
 
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = xstrndup(p + nbyte, (size_t)len);
+  rettv->vval.v_string = xmemdupz(p + nbyte, (size_t)len);
 }
 
 /// "strpart()" function

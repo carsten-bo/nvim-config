@@ -1,5 +1,4 @@
-#ifndef NVIM_SEARCH_H
-#define NVIM_SEARCH_H
+#pragma once
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -52,7 +51,7 @@
 #define RE_LAST         2       // use last used pattern if "pat" is NULL
 
 // Values for searchcount()
-#define SEARCH_STAT_DEF_TIMEOUT 40L
+#define SEARCH_STAT_DEF_TIMEOUT 40
 #define SEARCH_STAT_DEF_MAX_COUNT 99
 #define SEARCH_STAT_BUF_LEN 12
 
@@ -109,4 +108,3 @@ typedef struct {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "search.h.generated.h"
 #endif
-#endif  // NVIM_SEARCH_H

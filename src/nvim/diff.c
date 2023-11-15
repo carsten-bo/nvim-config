@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 /// @file diff.c
 ///
 /// Code for diff'ing two, three or four buffers.
@@ -106,9 +103,9 @@ typedef struct {
 // used for recording hunks from xdiff
 typedef struct {
   linenr_T lnum_orig;
-  long count_orig;
+  int count_orig;
   linenr_T lnum_new;
-  long count_new;
+  int count_new;
 } diffhunk_T;
 
 // two diff inputs and one result
@@ -343,8 +340,7 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1, linenr_T
 
       dnext->df_lnum[idx] = line1;
       dnext->df_count[idx] = inserted;
-      int i;
-      for (i = 0; i < DB_COUNT; i++) {
+      for (int i = 0; i < DB_COUNT; i++) {
         if ((tp->tp_diffbuf[i] != NULL) && (i != idx)) {
           if (dprev == NULL) {
             dnext->df_lnum[i] = line1;
@@ -475,8 +471,7 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1, linenr_T
     // check if this block touches the previous one, may merge them.
     if ((dprev != NULL) && !dp->is_linematched
         && (dprev->df_lnum[idx] + dprev->df_count[idx] == dp->df_lnum[idx])) {
-      int i;
-      for (i = 0; i < DB_COUNT; i++) {
+      for (int i = 0; i < DB_COUNT; i++) {
         if (tp->tp_diffbuf[i] != NULL) {
           dprev->df_count[i] += dp->df_count[i];
         }
@@ -771,7 +766,7 @@ static int diff_write_buffer(buf_T *buf, mmfile_t *m, linenr_T start, linenr_T e
     return FAIL;
   }
   m->ptr = ptr;
-  m->size = (long)len;
+  m->size = (int)len;
 
   len = 0;
   for (linenr_T lnum = start; lnum <= end; lnum++) {
@@ -824,7 +819,7 @@ static int diff_write(buf_T *buf, diffin_T *din)
   // so it shouldn't update the '[ and '] marks.
   cmdmod.cmod_flags |= CMOD_LOCKMARKS;
   int r = buf_write(buf, din->din_fname, NULL,
-                    (linenr_T)1, buf->b_ml.ml_line_count,
+                    1, buf->b_ml.ml_line_count,
                     NULL, false, false, false, true);
   cmdmod.cmod_flags = save_cmod_flags;
   free_string_option(buf->b_p_ff);
@@ -1208,7 +1203,7 @@ void ex_diffpatch(exarg_T *eap)
 
   // Write the current buffer to "tmp_orig".
   if (buf_write(curbuf, tmp_orig, NULL,
-                (linenr_T)1, curbuf->b_ml.ml_line_count,
+                1, curbuf->b_ml.ml_line_count,
                 NULL, false, false, false, true) == FAIL) {
     goto theend;
   }
@@ -1579,10 +1574,10 @@ static bool extract_hunk(FILE *fd, diffhunk_T *hunk, diffstyle_T *diffstyle)
         *diffstyle = DIFF_ED;
       } else if ((strncmp(line, "@@ ", 3) == 0)) {
         *diffstyle = DIFF_UNIFIED;
-      } else if ((strncmp(line, "--- ", 4) == 0)  // -V501
-                 && (vim_fgets(line, LBUFLEN, fd) == 0)  // -V501
+      } else if ((strncmp(line, "--- ", 4) == 0)
+                 && (vim_fgets(line, LBUFLEN, fd) == 0)
                  && (strncmp(line, "+++ ", 4) == 0)
-                 && (vim_fgets(line, LBUFLEN, fd) == 0)  // -V501
+                 && (vim_fgets(line, LBUFLEN, fd) == 0)
                  && (strncmp(line, "@@ ", 3) == 0)) {
         *diffstyle = DIFF_UNIFIED;
       } else {
@@ -2571,7 +2566,7 @@ int diffopt_changed(void)
 
   // recompute the scroll binding with the new option value, may
   // remove or add filler lines
-  check_scrollbind((linenr_T)0, 0L);
+  check_scrollbind(0, 0);
   return OK;
 }
 
@@ -3106,7 +3101,7 @@ static void diffgetput(const int addr_count, const int idx_cur, const int idx_fr
           // which results in inaccurate reporting of the byte count of
           // previous contents in buffer-update events.
           buf_empty = false;
-          ml_delete((linenr_T)2, false);
+          ml_delete(2, false);
         }
       }
       linenr_T new_count = dp->df_count[idx_to] + added;
@@ -3217,7 +3212,7 @@ bool diff_mode_buf(buf_T *buf)
 /// @param count
 ///
 /// @return FAIL if there isn't such a diff block.
-int diff_move_to(int dir, long count)
+int diff_move_to(int dir, int count)
 {
   linenr_T lnum = curwin->w_cursor.lnum;
   int idx = diff_buf_idx(curbuf);
@@ -3360,7 +3355,7 @@ linenr_T diff_lnum_win(linenr_T lnum, win_T *wp)
 
   if (idx == DB_COUNT) {
     // safety check
-    return (linenr_T)0;
+    return 0;
   }
 
   if (curtab->tp_diff_invalid) {
@@ -3386,7 +3381,7 @@ linenr_T diff_lnum_win(linenr_T lnum, win_T *wp)
 
   if (i == DB_COUNT) {
     // safety check
-    return (linenr_T)0;
+    return 0;
   }
 
   linenr_T n = lnum + (dp->df_lnum[i] - dp->df_lnum[idx]);

@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // Code for menus.  Used for the GUI and 'wildmenu'.
 // GUI/Motif support by Robert Webb
 
@@ -803,8 +800,6 @@ static int show_menus(char *const path_name, int modes)
 /// Recursively show the mappings associated with the menus under the given one
 static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
 {
-  int i;
-
   if (menu != NULL && (menu->modes & modes) == 0x0) {
     return;
   }
@@ -814,7 +809,7 @@ static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
     if (got_int) {              // "q" hit for "--more--"
       return;
     }
-    for (i = 0; i < depth; i++) {
+    for (int i = 0; i < depth; i++) {
       msg_puts("  ");
     }
     if (menu->priority) {
@@ -832,7 +827,7 @@ static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
         if (got_int) {                  // "q" hit for "--more--"
           return;
         }
-        for (i = 0; i < depth + 2; i++) {
+        for (int i = 0; i < depth + 2; i++) {
           msg_puts("  ");
         }
         msg_puts(menu_mode_chars[bit]);
@@ -1313,7 +1308,7 @@ static char *menu_text(const char *str, int *mnemonic, char **actext)
       *actext = xstrdup(p + 1);
     }
     assert(p >= str);
-    text = xstrnsave(str, (size_t)(p - str));
+    text = xmemdupz(str, (size_t)(p - str));
   } else {
     text = xstrdup(str);
   }
@@ -1736,7 +1731,7 @@ void ex_menutranslate(exarg_T *eap)
       from = xstrdup(from);
       from_noamp = menu_text(from, NULL, NULL);
       assert(arg >= to);
-      to = xstrnsave(to, (size_t)(arg - to));
+      to = xmemdupz(to, (size_t)(arg - to));
       menu_translate_tab_and_shift(from);
       menu_translate_tab_and_shift(to);
       menu_unescape_name(from);

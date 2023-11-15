@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // syntax.c: code for syntax highlighting
 
 #include <assert.h>
@@ -122,7 +119,7 @@ typedef struct state_item {
   int si_end_idx;                       // group ID for end pattern or zero
   int si_ends;                          // if match ends before si_m_endpos
   int si_attr;                          // attributes in this state
-  long si_flags;                        // HL_HAS_EOL flag in this state, and
+  int si_flags;                         // HL_HAS_EOL flag in this state, and
                                         // HL_SKIP* for si_next_list
   int si_seqnr;                         // sequence number
   int si_cchar;                         // substitution character for conceal
@@ -239,8 +236,6 @@ static keyentry_T dumkey;
 #define HIKEY2KE(p)   ((keyentry_T *)((p) - (dumkey.keyword - (char *)&dumkey)))
 #define HI2KE(hi)      HIKEY2KE((hi)->hi_key)
 
-// -V:HI2KE:782
-
 // To reduce the time spent in keepend(), remember at which level in the state
 // stack the first item with "keepend" is present.  When "-1", there is no
 // "keepend" on the stack.
@@ -265,7 +260,7 @@ static lpos_T next_match_m_endpos;      // position for end of next match
 static lpos_T next_match_h_startpos;    // pos. for highl. start of next match
 static lpos_T next_match_h_endpos;      // pos. for highl. end of next match
 static int next_match_idx;              // index of matched item
-static long next_match_flags;           // flags for next match
+static int next_match_flags;            // flags for next match
 static lpos_T next_match_eos_pos;       // end of start pattn (start region)
 static lpos_T next_match_eoe_pos;       // pos. for end of end pattern
 static int next_match_end_idx;          // ID of group for end pattn or zero
@@ -312,7 +307,6 @@ void syn_set_timeout(proftime_T *tm)
 // window.
 void syntax_start(win_T *wp, linenr_T lnum)
 {
-  synstate_T *p;
   synstate_T *last_valid = NULL;
   synstate_T *last_min_valid = NULL;
   synstate_T *sp, *prev = NULL;
@@ -367,7 +361,7 @@ void syntax_start(win_T *wp, linenr_T lnum)
   // Only do this if lnum is not before and not to far beyond a saved state.
   if (INVALID_STATE(&current_state) && syn_block->b_sst_array != NULL) {
     // Find last valid saved state before start_lnum.
-    for (p = syn_block->b_sst_first; p != NULL; p = p->sst_next) {
+    for (synstate_T *p = syn_block->b_sst_first; p != NULL; p = p->sst_next) {
       if (p->sst_lnum > lnum) {
         break;
       }
@@ -758,7 +752,7 @@ static int syn_match_linecont(linenr_T lnum)
 
   regmatch.rmm_ic = syn_block->b_syn_linecont_ic;
   regmatch.regprog = syn_block->b_syn_linecont_prog;
-  int r = syn_regexec(&regmatch, lnum, (colnr_T)0,
+  int r = syn_regexec(&regmatch, lnum, 0,
                       IF_SYN_TIME(&syn_block->b_syn_linecont_time));
   syn_block->b_syn_linecont_prog = regmatch.regprog;
 
@@ -882,13 +876,11 @@ static void syn_update_ends(bool startofline)
 
 static void syn_stack_free_block(synblock_T *block)
 {
-  synstate_T *p;
-
   if (block->b_sst_array == NULL) {
     return;
   }
 
-  for (p = block->b_sst_first; p != NULL; p = p->sst_next) {
+  for (synstate_T *p = block->b_sst_first; p != NULL; p = p->sst_next) {
     clear_syn_state(p);
   }
   XFREE_CLEAR(block->b_sst_array);
@@ -1042,7 +1034,7 @@ static void syn_stack_apply_changes_block(synblock_T *block, buf_T *buf)
 /// @return  true if at least one entry was freed.
 static bool syn_stack_cleanup(void)
 {
-  synstate_T *p, *prev;
+  synstate_T *prev;
   disptick_T tick;
   int dist;
   bool retval = false;
@@ -1064,7 +1056,7 @@ static bool syn_stack_cleanup(void)
   tick = syn_block->b_sst_lasttick;
   bool above = false;
   prev = syn_block->b_sst_first;
-  for (p = prev->sst_next; p != NULL; prev = p, p = p->sst_next) {
+  for (synstate_T *p = prev->sst_next; p != NULL; prev = p, p = p->sst_next) {
     if (prev->sst_lnum + dist > p->sst_lnum) {
       if (p->sst_tick > syn_block->b_sst_lasttick) {
         if (!above || p->sst_tick < tick) {
@@ -1080,7 +1072,7 @@ static bool syn_stack_cleanup(void)
   // Go through the list to make the entries for the oldest tick at an
   // interval of several lines.
   prev = syn_block->b_sst_first;
-  for (p = prev->sst_next; p != NULL; prev = p, p = p->sst_next) {
+  for (synstate_T *p = prev->sst_next; p != NULL; prev = p, p = p->sst_next) {
     if (p->sst_tick == tick && prev->sst_lnum + dist > p->sst_lnum) {
       // Move this entry from used list to free list
       prev->sst_next = p->sst_next;
@@ -1106,10 +1098,8 @@ static void syn_stack_free_entry(synblock_T *block, synstate_T *p)
 // Returns NULL when there is no entry or the first entry is after "lnum".
 static synstate_T *syn_stack_find_entry(linenr_T lnum)
 {
-  synstate_T *p, *prev;
-
-  prev = NULL;
-  for (p = syn_block->b_sst_first; p != NULL; prev = p, p = p->sst_next) {
+  synstate_T *prev = NULL;
+  for (synstate_T *p = syn_block->b_sst_first; p != NULL; prev = p, p = p->sst_next) {
     if (p->sst_lnum == lnum) {
       return p;
     }
@@ -1209,7 +1199,7 @@ static synstate_T *store_current_state(void)
     }
     for (i = 0; i < sp->sst_stacksize; i++) {
       bp[i].bs_idx = CUR_STATE(i).si_idx;
-      bp[i].bs_flags = (int)CUR_STATE(i).si_flags;
+      bp[i].bs_flags = CUR_STATE(i).si_flags;
       bp[i].bs_seqnr = CUR_STATE(i).si_seqnr;
       bp[i].bs_cchar = CUR_STATE(i).si_cchar;
       bp[i].bs_extmatch = ref_extmatch(CUR_STATE(i).si_extmatch);
@@ -1511,7 +1501,7 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
   stateitem_T *cur_si, *sip = NULL;
   int startcol;
   int endcol;
-  long flags;
+  int flags;
   int cchar;
   int16_t *next_list;
   bool found_match;                         // found usable match
@@ -1884,7 +1874,7 @@ static int syn_current_attr(const bool syncing, const bool displaying, bool *con
         current_attr = sip->si_attr;
         current_id = sip->si_id;
         current_trans_id = sip->si_trans_id;
-        current_flags = (int)sip->si_flags;
+        current_flags = sip->si_flags;
         current_seqnr = sip->si_seqnr;
         current_sub_char = sip->si_cchar;
         break;
@@ -2114,7 +2104,7 @@ static void check_state_ends(void)
       // handle next_list, unless at end of line and no "skipnl" or
       // "skipempty"
       current_next_list = cur_si->si_next_list;
-      current_next_flags = (int)cur_si->si_flags;
+      current_next_flags = cur_si->si_flags;
       if (!(current_next_flags & (HL_SKIPNL | HL_SKIPEMPTY))
           && syn_getcurline()[current_col] == NUL) {
         current_next_list = NULL;
@@ -2362,8 +2352,8 @@ static void pop_current_state(void)
 /// @param end_endpos  return: end of end pattern match
 /// @param end_idx     return: group ID for end pat. match, or 0
 /// @param start_ext   submatches from the start pattern
-static void find_endpos(int idx, lpos_T *startpos, lpos_T *m_endpos, lpos_T *hl_endpos,
-                        long *flagsp, lpos_T *end_endpos, int *end_idx, reg_extmatch_T *start_ext)
+static void find_endpos(int idx, lpos_T *startpos, lpos_T *m_endpos, lpos_T *hl_endpos, int *flagsp,
+                        lpos_T *end_endpos, int *end_idx, reg_extmatch_T *start_ext)
 {
   colnr_T matchcol;
   synpat_T *spp, *spp_skip;
@@ -2700,7 +2690,7 @@ static int syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T 
   }
 
   rmp->rmm_maxcol = (colnr_T)syn_buf->b_p_smc;
-  long r = vim_regexec_multi(rmp, syn_win, syn_buf, lnum, col, syn_tm, &timed_out);
+  int r = vim_regexec_multi(rmp, syn_win, syn_buf, lnum, col, syn_tm, &timed_out);
 
   if (l_syn_time_on) {
     pt = profile_end(pt);
@@ -2737,7 +2727,7 @@ static int syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T 
 /// @param cur_si      item at the top of the stack
 /// @param ccharp      conceal substitution char
 static int check_keyword_id(char *const line, const int startcol, int *const endcolp,
-                            long *const flagsp, int16_t **const next_listp,
+                            int *const flagsp, int16_t **const next_listp,
                             stateitem_T *const cur_si, int *const ccharp)
 {
   // Find first character after the keyword.  First character was already
@@ -5049,7 +5039,7 @@ static int get_id_list(char **const arg, const int keylen, int16_t **const list,
           regmatch.rm_ic = true;
           id = 0;
           for (int i = highlight_num_groups(); --i >= 0;) {
-            if (vim_regexec(&regmatch, highlight_group_name(i), (colnr_T)0)) {
+            if (vim_regexec(&regmatch, highlight_group_name(i), 0)) {
               if (round == 2) {
                 // Got more items than expected; can happen
                 // when adding items that match:
@@ -5059,7 +5049,7 @@ static int get_id_list(char **const arg, const int keylen, int16_t **const list,
                   xfree(retval);
                   round = 1;
                 } else {
-                  retval[count] = (int16_t)(i + 1);  // -V522
+                  retval[count] = (int16_t)(i + 1);
                 }
               }
               count++;

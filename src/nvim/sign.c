@@ -1,9 +1,4 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
-//
 // sign.c: functions for managing with signs
-//
 
 #include <inttypes.h>
 #include <stdbool.h>
@@ -450,7 +445,7 @@ static linenr_T buf_change_sign_type(buf_T *buf, int markId, const char *group, 
     }
   }
 
-  return (linenr_T)0;
+  return 0;
 }
 
 /// Return the sign attrs which has the attribute specified by 'type'. Returns
@@ -732,8 +727,8 @@ static void sign_list_placed(buf_T *rbuf, char *sign_group)
         group[0] = '\0';
       }
       vim_snprintf(lbuf, MSG_BUF_LEN,
-                   _("    line=%ld  id=%d%s  name=%s  priority=%d"),
-                   (long)sign->se_lnum, sign->se_id, group,
+                   _("    line=%" PRIdLINENR "  id=%d%s  name=%s  priority=%d"),
+                   sign->se_lnum, sign->se_id, group,
                    sign_typenr2name(sign->se_typenr), sign->se_priority);
       msg_puts(lbuf);
       msg_putchar('\n');
@@ -1211,27 +1206,27 @@ static void sign_define_cmd(char *sign_name, char *cmdline)
     if (strncmp(arg, "icon=", 5) == 0) {
       arg += 5;
       XFREE_CLEAR(icon);
-      icon = xstrnsave(arg, (size_t)(p - arg));
+      icon = xmemdupz(arg, (size_t)(p - arg));
     } else if (strncmp(arg, "text=", 5) == 0) {
       arg += 5;
       XFREE_CLEAR(text);
-      text = xstrnsave(arg, (size_t)(p - arg));
+      text = xmemdupz(arg, (size_t)(p - arg));
     } else if (strncmp(arg, "linehl=", 7) == 0) {
       arg += 7;
       XFREE_CLEAR(linehl);
-      linehl = xstrnsave(arg, (size_t)(p - arg));
+      linehl = xmemdupz(arg, (size_t)(p - arg));
     } else if (strncmp(arg, "texthl=", 7) == 0) {
       arg += 7;
       XFREE_CLEAR(texthl);
-      texthl = xstrnsave(arg, (size_t)(p - arg));
+      texthl = xmemdupz(arg, (size_t)(p - arg));
     } else if (strncmp(arg, "culhl=", 6) == 0) {
       arg += 6;
       XFREE_CLEAR(culhl);
-      culhl = xstrnsave(arg, (size_t)(p - arg));
+      culhl = xmemdupz(arg, (size_t)(p - arg));
     } else if (strncmp(arg, "numhl=", 6) == 0) {
       arg += 6;
       XFREE_CLEAR(numhl);
-      numhl = xstrnsave(arg, (size_t)(p - arg));
+      numhl = xmemdupz(arg, (size_t)(p - arg));
     } else {
       semsg(_(e_invarg2), arg);
       failed = true;
@@ -1622,7 +1617,7 @@ static void sign_get_placed_in_buf(buf_T *buf, linenr_T lnum, int sign_id, const
   d = tv_dict_alloc();
   tv_list_append_dict(retlist, d);
 
-  tv_dict_add_nr(d, S_LEN("bufnr"), (long)buf->b_fnum);
+  tv_dict_add_nr(d, S_LEN("bufnr"), buf->b_fnum);
 
   l = tv_list_alloc(kListLenMayKnow);
   tv_dict_add_list(d, S_LEN("signs"), l);

@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 #include <assert.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -731,7 +728,7 @@ int get_number_indent(linenr_T lnum)
 
     // vim_regexec() expects a pointer to a line.  This lets us
     // start matching for the flp beyond any comment leader...
-    if (vim_regexec(&regmatch, ml_get(lnum) + lead_len, (colnr_T)0)) {
+    if (vim_regexec(&regmatch, ml_get(lnum) + lead_len, 0)) {
       pos.lnum = lnum;
       pos.col = (colnr_T)(*regmatch.endp - ml_get(lnum));
       pos.coladd = 0;
@@ -800,7 +797,7 @@ int get_breakindent_win(win_T *wp, char *line)
   FUNC_ATTR_NONNULL_ALL
 {
   static int prev_indent = 0;  // cached indent value
-  static OptInt prev_ts = 0L;  // cached tabstop value
+  static OptInt prev_ts = 0;  // cached tabstop value
   static int prev_fnum = 0;  // cached buffer number
   static char *prev_line = NULL;  // cached copy of "line"
   static varnumber_T prev_tick = 0;  // changedtick of cached value
@@ -960,7 +957,7 @@ void ex_retab(exarg_T *eap)
     return;
   }
   while (ascii_isdigit(*(eap->arg)) || *(eap->arg) == ',') {
-    (eap->arg)++;
+    eap->arg++;
   }
 
   // This ensures that either new_vts_array and new_ts_str are freshly
@@ -970,7 +967,7 @@ void ex_retab(exarg_T *eap)
     new_vts_array = curbuf->b_p_vts_array;
     new_ts_str = NULL;
   } else {
-    new_ts_str = xstrnsave(new_ts_str, (size_t)(eap->arg - new_ts_str));
+    new_ts_str = xmemdupz(new_ts_str, (size_t)(eap->arg - new_ts_str));
   }
   for (lnum = eap->line1; !got_int && lnum <= eap->line2; lnum++) {
     char *ptr = ml_get(lnum);
@@ -1018,7 +1015,7 @@ void ex_retab(exarg_T *eap)
             // len is actual number of white characters used
             len = num_spaces + num_tabs;
             old_len = (int)strlen(ptr);
-            const long new_len = old_len - col + start_col + len + 1;
+            const int new_len = old_len - col + start_col + len + 1;
             if (new_len <= 0 || new_len >= MAXCOL) {
               emsg_text_too_long();
               break;
@@ -1083,7 +1080,7 @@ void ex_retab(exarg_T *eap)
     redraw_curbuf_later(UPD_NOT_VALID);
   }
   if (first_line != 0) {
-    changed_lines(curbuf, first_line, 0, last_line + 1, 0L, true);
+    changed_lines(curbuf, first_line, 0, last_line + 1, 0, true);
   }
 
   curwin->w_p_list = save_list;         // restore 'list'

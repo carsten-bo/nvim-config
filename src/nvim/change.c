@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 /// change.c: functions related to changing text
 
 #include <assert.h>
@@ -92,7 +89,7 @@ void change_warning(buf_T *buf, int col)
     (void)msg_end();
     if (msg_silent == 0 && !silent_mode && ui_active()) {
       ui_flush();
-      os_delay(1002L, true);  // give the user time to think about it
+      os_delay(1002, true);  // give the user time to think about it
     }
     buf->b_did_warn = true;
     redraw_cmdline = false;  // don't redraw and erase the message
@@ -131,7 +128,7 @@ void changed(buf_T *buf)
       // and don't let the emsg() set msg_scroll.
       if (need_wait_return && emsg_silent == 0 && !in_assert_fails) {
         ui_flush();
-        os_delay(2002L, true);
+        os_delay(2002, true);
         wait_return(true);
         msg_scroll = save_msg_scroll;
       } else {
@@ -457,7 +454,7 @@ void appended_lines(linenr_T lnum, linenr_T count)
 /// Like appended_lines(), but adjust marks first.
 void appended_lines_mark(linenr_T lnum, int count)
 {
-  mark_adjust(lnum + 1, (linenr_T)MAXLNUM, (linenr_T)count, 0L, kExtmarkUndo);
+  mark_adjust(lnum + 1, (linenr_T)MAXLNUM, (linenr_T)count, 0, kExtmarkUndo);
   changed_lines(curbuf, lnum + 1, 0, lnum + 1, (linenr_T)count, true);
 }
 
@@ -552,7 +549,7 @@ void changed_lines(buf_T *buf, linenr_T lnum, colnr_T col, linenr_T lnume, linen
         wlnum = diff_lnum_win(lnum, wp);
         if (wlnum > 0) {
           buf_redraw_changed_lines_later(wp->w_buffer, wlnum,
-                                         lnume - lnum + wlnum, 0L);
+                                         lnume - lnum + wlnum, 0);
         }
       }
     }
@@ -623,7 +620,7 @@ bool file_ff_differs(buf_T *buf, bool ignore_empty)
   if (ignore_empty
       && (buf->b_flags & BF_NEW)
       && buf->b_ml.ml_line_count == 1
-      && *ml_get_buf(buf, (linenr_T)1) == NUL) {
+      && *ml_get_buf(buf, 1) == NUL) {
     return false;
   }
   if (buf->b_start_ffc != *buf->b_p_ff) {
@@ -823,7 +820,7 @@ int del_char(bool fixpos)
   if (*get_cursor_pos_ptr() == NUL) {
     return FAIL;
   }
-  return del_chars(1L, fixpos);
+  return del_chars(1, fixpos);
 }
 
 /// Like del_bytes(), but delete characters instead of bytes.
@@ -1699,14 +1696,13 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
   // concatenate leader and p_extra, if there is a leader
   if (lead_len > 0) {
     if (flags & OPENLINE_COM_LIST && second_line_indent > 0) {
-      int i;
       int padding = second_line_indent
                     - (newindent + (int)strlen(leader));
 
       // Here whitespace is inserted after the comment char.
       // Below, set_indent(newindent, SIN_INSERT) will insert the
       // whitespace needed before the comment char.
-      for (i = 0; i < padding; i++) {
+      for (int i = 0; i < padding; i++) {
         STRCAT(leader, " ");
         less_cols--;
         newcol++;
@@ -1726,12 +1722,12 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
     curwin->w_cursor.lnum--;
   }
   if ((State & VREPLACE_FLAG) == 0 || old_cursor.lnum >= orig_line_count) {
-    if (ml_append(curwin->w_cursor.lnum, p_extra, (colnr_T)0, false) == FAIL) {
+    if (ml_append(curwin->w_cursor.lnum, p_extra, 0, false) == FAIL) {
       goto theend;
     }
     // Postpone calling changed_lines(), because it would mess up folding
     // with markers.
-    mark_adjust(curwin->w_cursor.lnum + 1, (linenr_T)MAXLNUM, 1L, 0L, kExtmarkNOOP);
+    mark_adjust(curwin->w_cursor.lnum + 1, (linenr_T)MAXLNUM, 1, 0, kExtmarkNOOP);
     did_append = true;
   } else {
     // In MODE_VREPLACE state we are starting to replace the next line.
@@ -1822,14 +1818,14 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
       saved_line = NULL;
       if (did_append) {
         changed_lines(curbuf, curwin->w_cursor.lnum, curwin->w_cursor.col,
-                      curwin->w_cursor.lnum + 1, 1L, true);
+                      curwin->w_cursor.lnum + 1, 1, true);
         did_append = false;
 
         // Move marks after the line break to the new line.
         if (flags & OPENLINE_MARKFIX) {
           mark_col_adjust(curwin->w_cursor.lnum,
                           curwin->w_cursor.col + less_cols_off,
-                          1L, -less_cols, 0);
+                          1, -less_cols, 0);
         }
         // Always move extmarks - Here we move only the line where the
         // cursor is, the previous mark_adjust takes care of the lines after
@@ -1847,7 +1843,7 @@ int open_line(int dir, int flags, int second_line_indent, bool *did_do_comment)
     curwin->w_cursor.lnum = old_cursor.lnum + 1;
   }
   if (did_append) {
-    changed_lines(curbuf, curwin->w_cursor.lnum, 0, curwin->w_cursor.lnum, 1L, true);
+    changed_lines(curbuf, curwin->w_cursor.lnum, 0, curwin->w_cursor.lnum, 1, true);
     // bail out and just get the final length of the line we just manipulated
     bcount_t extra = (bcount_t)strlen(ml_get(curwin->w_cursor.lnum));
     extmark_splice(curbuf, (int)curwin->w_cursor.lnum - 1, 0,
@@ -1990,9 +1986,7 @@ int get_leader_len(char *line, char **flags, bool backward, bool include_space)
   int got_com = false;
   char part_buf[COM_MAX_LEN];         // buffer for one option part
   char *string;                  // pointer to comment string
-  char *list;
   int middle_match_len = 0;
-  char *prev_list;
   char *saved_flags = NULL;
 
   int result = 0;
@@ -2005,13 +1999,13 @@ int get_leader_len(char *line, char **flags, bool backward, bool include_space)
   while (line[i] != NUL) {
     // scan through the 'comments' option for a match
     int found_one = false;
-    for (list = curbuf->b_p_com; *list;) {
+    for (char *list = curbuf->b_p_com; *list;) {
       // Get one option part into part_buf[].  Advance "list" to next
       // one.  Put "string" at start of string.
       if (!got_com && flags != NULL) {
         *flags = list;              // remember where flags started
       }
-      prev_list = list;
+      char *prev_list = list;
       (void)copy_option_part(&list, part_buf, COM_MAX_LEN, ",");
       string = vim_strchr(part_buf, ':');
       if (string == NULL) {         // missing ':', ignore this part
@@ -2207,7 +2201,6 @@ int get_last_leader_offset(char *line, char **flags)
 
     if (found_one) {
       char part_buf2[COM_MAX_LEN];            // buffer for one option part
-      int len1, len2, off;
 
       result = i;
       // If this comment nests, continue searching.
@@ -2225,7 +2218,7 @@ int get_last_leader_offset(char *line, char **flags)
       while (ascii_iswhite(*com_leader)) {
         com_leader++;
       }
-      len1 = (int)strlen(com_leader);
+      int len1 = (int)strlen(com_leader);
 
       for (list = curbuf->b_p_com; *list;) {
         char *flags_save = list;
@@ -2239,14 +2232,14 @@ int get_last_leader_offset(char *line, char **flags)
         while (ascii_iswhite(*string)) {
           string++;
         }
-        len2 = (int)strlen(string);
+        int len2 = (int)strlen(string);
         if (len2 == 0) {
           continue;
         }
 
         // Now we have to verify whether string ends with a substring
         // beginning the com_leader.
-        for (off = (len2 > i ? i : len2); off > 0 && off + len1 > len2;) {
+        for (int off = (len2 > i ? i : len2); off > 0 && off + len1 > len2;) {
           off--;
           if (!strncmp(string + off, com_leader, (size_t)(len2 - off))) {
             if (i - off < lower_check_bound) {

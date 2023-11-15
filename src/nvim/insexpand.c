@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // insexpand.c: functions for Insert mode completion
 
 #include <assert.h>
@@ -474,7 +471,7 @@ bool check_compl_option(bool dict_opt)
       vim_beep(BO_COMPL);
       setcursor();
       ui_flush();
-      os_delay(2004L, false);
+      os_delay(2004, false);
     }
     return false;
   }
@@ -913,7 +910,6 @@ static bool ins_compl_equal(compl_T *match, char *str, size_t len)
 static void ins_compl_longest_match(compl_T *match)
 {
   char *p, *s;
-  int c1, c2;
   int had_match;
 
   if (compl_leader == NULL) {
@@ -939,8 +935,8 @@ static void ins_compl_longest_match(compl_T *match)
   p = compl_leader;
   s = match->cp_str;
   while (*p != NUL) {
-    c1 = utf_ptr2char(p);
-    c2 = utf_ptr2char(s);
+    int c1 = utf_ptr2char(p);
+    int c2 = utf_ptr2char(s);
 
     if ((match->cp_flags & CP_ICASE)
         ? (mb_tolower(c1) != mb_tolower(c2))
@@ -1244,9 +1240,6 @@ void ins_compl_show_pum(void)
     return;
   }
 
-  // Dirty hard-coded hack: remove any matchparen highlighting.
-  do_cmdline_cmd("if exists('g:loaded_matchparen')|3match none|endif");
-
   // Update the screen before drawing the popup menu over it.
   update_screen();
 
@@ -1448,11 +1441,10 @@ static void ins_compl_files(int count, char **files, int thesaurus, int flags, r
 {
   char *ptr;
   int i;
-  FILE *fp;
   int add_r;
 
   for (i = 0; i < count && !got_int && !compl_interrupted; i++) {
-    fp = os_fopen(files[i], "r");  // open dictionary file
+    FILE *fp = os_fopen(files[i], "r");  // open dictionary file
     if (flags != DICT_EXACT && !shortmess(SHM_COMPLETIONSCAN)) {
       msg_hist_off = true;  // reset in msg_trunc()
       vim_snprintf(IObuff, IOSIZE,
@@ -2187,7 +2179,6 @@ bool ins_compl_prep(int c)
 static void ins_compl_fixRedoBufForLeader(char *ptr_arg)
 {
   int len;
-  char *p;
   char *ptr = ptr_arg;
 
   if (ptr == NULL) {
@@ -2198,7 +2189,7 @@ static void ins_compl_fixRedoBufForLeader(char *ptr_arg)
     }
   }
   if (compl_orig_text != NULL) {
-    p = compl_orig_text;
+    char *p = compl_orig_text;
     for (len = 0; p[len] != NUL && p[len] == ptr[len]; len++) {}
     if (len > 0) {
       len -= utf_head_off(p, p + len);
@@ -2735,7 +2726,8 @@ static int info_add_completion_info(list_T *li)
   // Skip the element with the CP_ORIGINAL_TEXT flag at the beginning, in case of
   // forward completion, or at the end, in case of backward completion.
   match = forward ? match->cp_next
-                  : (compl_no_select ? match->cp_prev : match->cp_prev->cp_prev);
+                  : (compl_no_select && match_at_original_text(match)
+                     ? match->cp_prev : match->cp_prev->cp_prev);
 
   while (match != NULL && !match_at_original_text(match)) {
     dict_T *di = tv_dict_alloc();
@@ -2985,7 +2977,7 @@ static void get_next_include_file_completion(int compl_type)
                        ((compl_type == CTRL_X_PATH_DEFINES
                          && !(compl_cont_status & CONT_SOL))
                         ? FIND_DEFINE : FIND_ANY),
-                       1L, ACTION_EXPAND, 1, MAXLNUM);
+                       1, ACTION_EXPAND, 1, MAXLNUM);
 }
 
 /// Get the next set of words matching "compl_pattern" in dictionary or
@@ -3207,7 +3199,7 @@ static int get_next_default_completion(ins_compl_next_state_T *st, pos_T *start_
                                               compl_direction, compl_pattern);
     } else {
       found_new_match = searchit(NULL, st->ins_buf, st->cur_match_pos,
-                                 NULL, compl_direction, compl_pattern, 1L,
+                                 NULL, compl_direction, compl_pattern, 1,
                                  SEARCH_KEEP + SEARCH_NFMSG, RE_LAST, NULL);
     }
     msg_silent--;
@@ -3333,7 +3325,7 @@ static bool get_next_completion_match(int type, ins_compl_next_state_T *st, pos_
 static void get_next_bufname_token(void)
 {
   FOR_ALL_BUFFERS(b) {
-    if (b->b_p_bl) {
+    if (b->b_p_bl && b->b_sfname != NULL) {
       char *start = get_past_head(b->b_sfname);
       char *current = start;
       char *p = (char *)path_next_component(start);
@@ -3858,15 +3850,13 @@ static bool ins_compl_pum_key(int c)
 /// Returns 1 for most keys, height of the popup menu for page-up/down keys.
 static int ins_compl_key2count(int c)
 {
-  int h;
-
   if (c == K_EVENT || c == K_COMMAND || c == K_LUA) {
     int offset = pum_want.item - pum_selected_item;
     return abs(offset);
   }
 
   if (ins_compl_pum_key(c) && c != K_UP && c != K_DOWN) {
-    h = pum_get_height();
+    int h = pum_get_height();
     if (h > 3) {
       h -= 2;       // keep some context
     }

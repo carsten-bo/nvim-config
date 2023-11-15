@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // match.c: functions for highlighting matches
 
 #include <assert.h>
@@ -357,11 +354,10 @@ void init_search_hl(win_T *wp, match_T *search_hl)
 static int next_search_hl_pos(match_T *shl, linenr_T lnum, matchitem_T *match, colnr_T mincol)
   FUNC_ATTR_NONNULL_ALL
 {
-  int i;
   int found = -1;
 
   shl->lnum = 0;
-  for (i = match->mit_pos_cur; i < match->mit_pos_count; i++) {
+  for (int i = match->mit_pos_cur; i < match->mit_pos_count; i++) {
     llpos_T *pos = &match->mit_pos_array[i];
 
     if (pos->lnum == 0) {
@@ -536,7 +532,7 @@ void prepare_search_hl(win_T *wp, match_T *search_hl, linenr_T lnum)
       shl = search_hl;
       shl_flag = true;
     } else {
-      shl = &cur->mit_hl;  // -V595
+      shl = &cur->mit_hl;
     }
     if (shl->rm.regprog != NULL
         && shl->lnum == 0
@@ -614,7 +610,7 @@ bool prepare_search_hl_line(win_T *wp, linenr_T lnum, colnr_T mincol, char **lin
       shl = search_hl;
       shl_flag = true;
     } else {
-      shl = &cur->mit_hl;  // -V595
+      shl = &cur->mit_hl;
     }
     shl->startcol = MAXCOL;
     shl->endcol = MAXCOL;
@@ -905,7 +901,6 @@ void f_clearmatches(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 void f_getmatches(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 {
   matchitem_T *cur;
-  int i;
   win_T *win = get_optional_window(argvars, 0);
 
   tv_list_alloc_ret(rettv, kListLenMayKnow);
@@ -918,7 +913,7 @@ void f_getmatches(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
     dict_T *dict = tv_dict_alloc();
     if (cur->mit_match.regprog == NULL) {
       // match added with matchaddpos()
-      for (i = 0; i < cur->mit_pos_count; i++) {
+      for (int i = 0; i < cur->mit_pos_count; i++) {
         llpos_T *llpos;
         char buf[30];  // use 30 to avoid compiler warning
 
@@ -1216,7 +1211,7 @@ void ex_match(exarg_T *eap)
   } else {
     p = skiptowhite(eap->arg);
     if (!eap->skip) {
-      g = xstrnsave(eap->arg, (size_t)(p - eap->arg));
+      g = xmemdupz(eap->arg, (size_t)(p - eap->arg));
     }
     p = skipwhite(p);
     if (*p == NUL) {

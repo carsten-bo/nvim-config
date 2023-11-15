@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // spellfile.c: code for reading and writing spell files.
 //
 // See spell.c for information about spell checking.
@@ -1692,7 +1689,7 @@ static int spell_read_tree(FILE *fd, uint8_t **bytsp, int *bytsp_len, idx_T **id
   if (len < 0) {
     return SP_TRUNCERROR;
   }
-  if ((size_t)len >= SIZE_MAX / sizeof(int)) {  // -V547
+  if ((size_t)len >= SIZE_MAX / sizeof(int)) {
     // Invalid length, multiply with sizeof(int) would overflow.
     return SP_FORMERROR;
   }
@@ -3398,7 +3395,7 @@ static int store_aff_word(spellinfo_T *spin, char *word, char *afflist, afffile_
   affentry_T *ae;
   char newword[MAXWLEN];
   int retval = OK;
-  int i, j;
+  int j;
   char *p;
   int use_flags;
   char *use_pfxlist;
@@ -3438,7 +3435,7 @@ static int store_aff_word(spellinfo_T *spin, char *word, char *afflist, afffile_
               && (ae->ae_chop == NULL
                   || strlen(ae->ae_chop) < wordlen)
               && (ae->ae_prog == NULL
-                  || vim_regexec_prog(&ae->ae_prog, false, word, (colnr_T)0))
+                  || vim_regexec_prog(&ae->ae_prog, false, word, 0))
               && (((condit & CONDIT_CFIX) == 0)
                   == ((condit & CONDIT_AFF) == 0
                       || ae->ae_flags == NULL
@@ -3455,7 +3452,7 @@ static int store_aff_word(spellinfo_T *spin, char *word, char *afflist, afffile_
               p = word;
               if (ae->ae_chop != NULL) {
                 // Skip chop string.
-                i = mb_charlen(ae->ae_chop);
+                int i = mb_charlen(ae->ae_chop);
                 for (; i > 0; i--) {
                   MB_PTR_ADV(p);
                 }
@@ -3467,7 +3464,7 @@ static int store_aff_word(spellinfo_T *spin, char *word, char *afflist, afffile_
               if (ae->ae_chop != NULL) {
                 // Remove chop string.
                 p = newword + strlen(newword);
-                i = mb_charlen(ae->ae_chop);
+                int i = mb_charlen(ae->ae_chop);
                 for (; i > 0; i--) {
                   MB_PTR_BACK(newword, p);
                 }
@@ -3517,7 +3514,7 @@ static int store_aff_word(spellinfo_T *spin, char *word, char *afflist, afffile_
 
                 // Combine the prefix IDs. Avoid adding the
                 // same ID twice.
-                for (i = 0; i < pfxlen; i++) {
+                for (int i = 0; i < pfxlen; i++) {
                   for (j = 0; j < use_pfxlen; j++) {
                     if (pfxlist[i] == use_pfxlist[j]) {
                       break;
@@ -3539,7 +3536,7 @@ static int store_aff_word(spellinfo_T *spin, char *word, char *afflist, afffile_
                 // Combine the list of compound flags.
                 // Concatenate them to the prefix IDs list.
                 // Avoid adding the same ID twice.
-                for (i = pfxlen; pfxlist[i] != NUL; i++) {
+                for (int i = pfxlen; pfxlist[i] != NUL; i++) {
                   for (j = use_pfxlen; use_pfxlist[j] != NUL; j++) {
                     if (pfxlist[i] == use_pfxlist[j]) {
                       break;
@@ -4344,7 +4341,7 @@ static int write_vim_spell(spellinfo_T *spin, char *fname)
   // <HEADER>: <fileID> <versionnr>
   // <fileID>
   size_t fwv = fwrite(VIMSPELLMAGIC, VIMSPELLMAGICL, 1, fd);
-  if (fwv != (size_t)1) {
+  if (fwv != 1) {
     // Catch first write error, don't try writing more.
     goto theend;
   }
@@ -4702,7 +4699,7 @@ theend:
     retval = FAIL;
   }
 
-  if (fwv != (size_t)1) {
+  if (fwv != 1) {
     retval = FAIL;
   }
   if (retval == FAIL) {
@@ -5075,16 +5072,15 @@ static int sug_maketable(spellinfo_T *spin)
 /// @param gap  place to store line of numbers
 static int sug_filltable(spellinfo_T *spin, wordnode_T *node, int startwordnr, garray_T *gap)
 {
-  wordnode_T *p, *np;
   int wordnr = startwordnr;
   int nr;
   int prev_nr;
 
-  for (p = node; p != NULL; p = p->wn_sibling) {
+  for (wordnode_T *p = node; p != NULL; p = p->wn_sibling) {
     if (p->wn_byte == NUL) {
       gap->ga_len = 0;
       prev_nr = 0;
-      for (np = p; np != NULL && np->wn_byte == NUL; np = np->wn_sibling) {
+      for (wordnode_T *np = p; np != NULL && np->wn_byte == NUL; np = np->wn_sibling) {
         ga_grow(gap, 10);
 
         nr = (np->wn_flags << 16) + (np->wn_region & 0xffff);
@@ -5181,7 +5177,7 @@ static void sug_write(spellinfo_T *spin, char *fname)
   spell_message(spin, IObuff);
 
   // <SUGHEADER>: <fileID> <versionnr> <timestamp>
-  if (fwrite(VIMSUGMAGIC, VIMSUGMAGICL, (size_t)1, fd) != 1) {  // <fileID>
+  if (fwrite(VIMSUGMAGIC, VIMSUGMAGICL, 1, fd) != 1) {  // <fileID>
     emsg(_(e_write));
     goto theend;
   }
@@ -5813,7 +5809,6 @@ static int write_spell_prefcond(FILE *fd, garray_T *gap, size_t *fwv)
 // Use map string "map" for languages "lp".
 static void set_map_str(slang_T *lp, const char *map)
 {
-  const char *p;
   int headc = 0;
 
   if (*map == NUL) {
@@ -5831,7 +5826,7 @@ static void set_map_str(slang_T *lp, const char *map)
   // The similar characters are stored separated with slashes:
   // "aaa/bbb/ccc/".  Fill sl_map_array[c] with the character before c and
   // before the same slash.  For characters above 255 sl_map_hash is used.
-  for (p = map; *p != NUL;) {
+  for (const char *p = map; *p != NUL;) {
     int c = mb_cptr2char_adv(&p);
     if (c == '/') {
       headc = 0;

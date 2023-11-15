@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 #include <assert.h>
 #include <string.h>
 
@@ -64,10 +61,8 @@ void ugrid_scroll(UGrid *grid, int top, int bot, int left, int right, int count)
     step = -1;
   }
 
-  int i;
-
   // Copy cell data
-  for (i = start; i != stop; i += step) {
+  for (int i = start; i != stop; i += step) {
     UCell *target_row = grid->cells[i] + left;
     UCell *source_row = grid->cells[i + count] + left;
     assert(right >= left && left >= 0);

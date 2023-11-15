@@ -648,7 +648,12 @@ function protocol.make_client_capabilities()
       inlayHint = {
         dynamicRegistration = true,
         resolveSupport = {
-          properties = {},
+          properties = {
+            'textEdits',
+            'tooltip',
+            'location',
+            'command',
+          },
         },
       },
       semanticTokens = {
@@ -850,6 +855,9 @@ function protocol.make_client_capabilities()
         },
       },
       configuration = true,
+      didChangeConfiguration = {
+        dynamicRegistration = false,
+      },
       workspaceFolders = true,
       applyEdit = true,
       workspaceEdit = {

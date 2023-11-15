@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // fileio.c: read from and write to a file
 
 #include <assert.h>
@@ -90,7 +87,6 @@ static const char *e_auchangedbuf = N_("E812: Autocommands changed buffer or buf
 
 void filemess(buf_T *buf, char *name, char *s, int attr)
 {
-  int msg_scroll_save;
   int prev_msg_col = msg_col;
 
   if (msg_silent != 0) {
@@ -105,7 +101,7 @@ void filemess(buf_T *buf, char *name, char *s, int attr)
   // For the first message may have to start a new line.
   // For further ones overwrite the previous one, reset msg_scroll before
   // calling filemess().
-  msg_scroll_save = msg_scroll;
+  int msg_scroll_save = msg_scroll;
   if (shortmess(SHM_OVERALL) && !msg_listdo_overwrite && !exiting && p_verbose == 0) {
     msg_scroll = false;
   }
@@ -718,7 +714,7 @@ retry:
     if (read_buffer) {
       read_buf_lnum = 1;
       read_buf_col = 0;
-    } else if (read_stdin || vim_lseek(fd, (off_T)0L, SEEK_SET) != 0) {
+    } else if (read_stdin || vim_lseek(fd, 0, SEEK_SET) != 0) {
       // Can't rewind the file, give up.
       error = true;
       goto failed;
@@ -880,9 +876,9 @@ retry:
         // Use buffer >= 64K.  Add linerest to double the size if the
         // line gets very long, to avoid a lot of copying. But don't
         // read more than 1 Mbyte at a time, so we can be interrupted.
-        size = 0x10000L + linerest;
-        if (size > 0x100000L) {
-          size = 0x100000L;
+        size = 0x10000 + linerest;
+        if (size > 0x100000) {
+          size = 0x100000;
         }
       }
 
@@ -935,7 +931,7 @@ retry:
 
         if (conv_restlen > 0) {
           // Insert unconverted bytes from previous line.
-          memmove(ptr, conv_rest, (size_t)conv_restlen);  // -V614
+          memmove(ptr, conv_rest, (size_t)conv_restlen);
           ptr += conv_restlen;
           size -= conv_restlen;
         }
@@ -1326,7 +1322,6 @@ retry:
         // Reading UTF-8: Check if the bytes are valid UTF-8.
         for (p = (uint8_t *)ptr;; p++) {
           int todo = (int)(((uint8_t *)ptr + size) - p);
-          int l;
 
           if (todo <= 0) {
             break;
@@ -1336,7 +1331,7 @@ retry:
             // an incomplete character at the end though, the next
             // read() will get the next bytes, we'll check it
             // then.
-            l = utf_ptr2len_len((char *)p, todo);
+            int l = utf_ptr2len_len((char *)p, todo);
             if (l > todo && !incomplete_tail) {
               // Avoid retrying with a different encoding when
               // a truncated file is more likely, or attempting
@@ -1531,7 +1526,7 @@ rewind_retry:
                 if (try_unix
                     && !read_stdin
                     && (read_buffer
-                        || vim_lseek(fd, (off_T)0L, SEEK_SET) == 0)) {
+                        || vim_lseek(fd, 0, SEEK_SET) == 0)) {
                   fileformat = EOL_UNIX;
                   if (set_options) {
                     set_fileformat(EOL_UNIX, OPT_LOCAL);
@@ -1908,11 +1903,8 @@ bool is_dev_fd_file(char *fname)
 /// @param endp     end of more bytes read
 static linenr_T readfile_linenr(linenr_T linecnt, char *p, const char *endp)
 {
-  char *s;
-  linenr_T lnum;
-
-  lnum = curbuf->b_ml.ml_line_count - linecnt + 1;
-  for (s = p; s < endp; s++) {
+  linenr_T lnum = curbuf->b_ml.ml_line_count - linecnt + 1;
+  for (char *s = p; s < endp; s++) {
     if (*s == '\n') {
       lnum++;
     }
@@ -1980,7 +1972,6 @@ void set_forced_fenc(exarg_T *eap)
 static char *next_fenc(char **pp, bool *alloced)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
-  char *p;
   char *r;
 
   *alloced = false;
@@ -1988,12 +1979,12 @@ static char *next_fenc(char **pp, bool *alloced)
     *pp = NULL;
     return "";
   }
-  p = vim_strchr(*pp, ',');
+  char *p = vim_strchr(*pp, ',');
   if (p == NULL) {
     r = enc_canonize(*pp);
     *pp += strlen(*pp);
   } else {
-    r = xstrnsave(*pp, (size_t)(p - *pp));
+    r = xmemdupz(*pp, (size_t)(p - *pp));
     *pp = p + 1;
     p = enc_canonize(r);
     xfree(r);
@@ -2015,10 +2006,9 @@ static char *next_fenc(char **pp, bool *alloced)
 ///               Returns NULL if the conversion failed ("*fdp" is not set) .
 static char *readfile_charconvert(char *fname, char *fenc, int *fdp)
 {
-  char *tmpname;
   char *errmsg = NULL;
 
-  tmpname = vim_tempname();
+  char *tmpname = vim_tempname();
   if (tmpname == NULL) {
     errmsg = _("Can't find temp file for conversion");
   } else {
@@ -3054,7 +3044,7 @@ int buf_check_timestamp(buf_T *buf)
         if (emsg_silent == 0 && !in_assert_fails) {
           ui_flush();
           // give the user some time to think about it
-          os_delay(1004L, true);
+          os_delay(1004, true);
 
           // don't redraw and erase the message
           redraw_cmdline = false;
@@ -3132,7 +3122,7 @@ void buf_reload(buf_T *buf, int orig_mode, bool reload_options)
     savebuf = NULL;
   } else {
     // Allocate a buffer without putting it in the buffer list.
-    savebuf = buflist_new(NULL, NULL, (linenr_T)1, BLN_DUMMY);
+    savebuf = buflist_new(NULL, NULL, 1, BLN_DUMMY);
     set_bufref(&bufref, savebuf);
     if (savebuf != NULL && buf == curbuf) {
       // Open the memline.
@@ -3153,7 +3143,7 @@ void buf_reload(buf_T *buf, int orig_mode, bool reload_options)
   if (saved == OK) {
     curbuf->b_flags |= BF_CHECK_RO;           // check for RO again
     keep_filetype = true;                     // don't detect 'filetype'
-    if (readfile(buf->b_ffname, buf->b_fname, (linenr_T)0, (linenr_T)0,
+    if (readfile(buf->b_ffname, buf->b_fname, 0, 0,
                  (linenr_T)MAXLNUM, &ea, flags, false) != OK) {
       if (!aborting()) {
         semsg(_("E321: Could not reload \"%s\""), buf->b_fname);
@@ -3249,12 +3239,10 @@ void write_lnum_adjust(linenr_T offset)
 /// unless when it looks like a URL.
 void forward_slash(char *fname)
 {
-  char *p;
-
   if (path_with_url(fname)) {
     return;
   }
-  for (p = fname; *p != NUL; p++) {
+  for (char *p = fname; *p != NUL; p++) {
     if (*p == '\\') {
       *p = '/';
     }
@@ -3583,10 +3571,10 @@ bool match_file_pat(char *pattern, regprog_T **prog, char *fname, char *sfname, 
   // 3. the tail of the file name, when the pattern has no '/'.
   if (regmatch.regprog != NULL
       && ((allow_dirs
-           && (vim_regexec(&regmatch, fname, (colnr_T)0)
+           && (vim_regexec(&regmatch, fname, 0)
                || (sfname != NULL
-                   && vim_regexec(&regmatch, sfname, (colnr_T)0))))
-          || (!allow_dirs && vim_regexec(&regmatch, tail, (colnr_T)0)))) {
+                   && vim_regexec(&regmatch, sfname, 0))))
+          || (!allow_dirs && vim_regexec(&regmatch, tail, 0)))) {
     result = true;
   }
 

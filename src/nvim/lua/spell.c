@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 #include <assert.h>
 #include <lauxlib.h>
 #include <limits.h>
@@ -80,7 +77,7 @@ int nlua_spell_check(lua_State *lstate)
       lua_rawseti(lstate, -2, 2);
 
       // +1 for 1-indexing
-      lua_pushinteger(lstate, (long)pos + 1);
+      lua_pushinteger(lstate, (lua_Integer)pos + 1);
       lua_rawseti(lstate, -2, 3);
 
       lua_rawseti(lstate, -2, ++no_res);

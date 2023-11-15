@@ -1,5 +1,4 @@
-#ifndef NVIM_UI_CLIENT_H
-#define NVIM_UI_CLIENT_H
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -32,10 +31,6 @@ EXTERN int ui_client_exit_status INIT( = 0);
 /// Whether ui client has sent nvim_ui_attach yet
 EXTERN bool ui_client_attached INIT( = false);
 
-/// Whether ui client has gotten a response about the bg color of the terminal,
-/// kTrue=dark, kFalse=light, kNone=no response yet
-EXTERN TriState ui_client_bg_response INIT( = kNone);
-
 /// The ui client should forward its stdin to the nvim process
 /// by convention, this uses fd=3 (next free number after stdio)
 EXTERN bool ui_client_forward_stdin INIT( = false);
@@ -47,5 +42,3 @@ EXTERN bool ui_client_forward_stdin INIT( = false);
 # include "ui_events_client.h.generated.h"
 #endif
 // uncrustify:on
-
-#endif  // NVIM_UI_CLIENT_H

@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // ex_getln.c: Functions for entering and editing an Ex command line.
 
 #include <assert.h>
@@ -252,14 +249,9 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
                                       int *skiplen, int *patlen)
   FUNC_ATTR_NONNULL_ALL
 {
-  char *cmd;
   char *p;
   bool delim_optional = false;
-  int delim;
-  char *end;
   const char *dummy;
-  pos_T save_cursor;
-  bool use_last_pat;
   bool retval = false;
   magic_T magic = 0;
 
@@ -293,7 +285,7 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
   cmdmod_T dummy_cmdmod;
   parse_command_modifiers(&ea, &dummy, &dummy_cmdmod, true);
 
-  cmd = skip_range(ea.cmd, NULL);
+  char *cmd = skip_range(ea.cmd, NULL);
   if (vim_strchr("sgvl", (uint8_t)(*cmd)) == NULL) {
     goto theend;
   }
@@ -344,11 +336,11 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
   }
 
   p = skipwhite(p);
-  delim = (delim_optional && vim_isIDc((uint8_t)(*p))) ? ' ' : *p++;
+  int delim = (delim_optional && vim_isIDc((uint8_t)(*p))) ? ' ' : *p++;
   *search_delim = delim;
-  end = skip_regexp_ex(p, delim, magic_isset(), NULL, NULL, &magic);
+  char *end = skip_regexp_ex(p, delim, magic_isset(), NULL, NULL, &magic);
 
-  use_last_pat = end == p && *end == delim;
+  bool use_last_pat = end == p && *end == delim;
   if (end == p && !use_last_pat) {
     goto theend;
   }
@@ -369,7 +361,7 @@ static bool do_incsearch_highlighting(int firstc, int *search_delim, incsearch_s
   *patlen = (int)(end - p);
 
   // parse the address range
-  save_cursor = curwin->w_cursor;
+  pos_T save_cursor = curwin->w_cursor;
   curwin->w_cursor = s->search_start;
   parse_cmd_address(&ea, &dummy, true);
   if (ea.addr_count > 0) {
@@ -398,10 +390,7 @@ theend:
 static void may_do_incsearch_highlighting(int firstc, int count, incsearch_state_T *s)
 {
   pos_T end_pos;
-  proftime_T tm;
   int skiplen, patlen;
-  char next_char;
-  bool use_last_pat;
   int search_delim;
 
   // Parsing range may already set the last search pattern.
@@ -438,9 +427,9 @@ static void may_do_incsearch_highlighting(int firstc, int count, incsearch_state
   int found;  // do_search() result
 
   // Use the previous pattern for ":s//".
-  next_char = ccline.cmdbuff[skiplen + patlen];
-  use_last_pat = patlen == 0 && skiplen > 0
-                 && ccline.cmdbuff[skiplen - 1] == next_char;
+  char next_char = ccline.cmdbuff[skiplen + patlen];
+  bool use_last_pat = patlen == 0 && skiplen > 0
+                      && ccline.cmdbuff[skiplen - 1] == next_char;
 
   // If there is no pattern, don't do anything.
   if (patlen == 0 && !use_last_pat) {
@@ -453,7 +442,7 @@ static void may_do_incsearch_highlighting(int firstc, int count, incsearch_state
     ui_flush();
     emsg_off++;            // So it doesn't beep if bad expr
     // Set the time limit to half a second.
-    tm = profile_setlimit(500L);
+    proftime_T tm = profile_setlimit(500);
     if (!p_hls) {
       search_flags += SEARCH_KEEP;
     }
@@ -609,7 +598,7 @@ static void finish_incsearch_highlighting(int gotesc, incsearch_state_T *s, bool
       curwin->w_cursor = s->save_cursor;
       setpcmark();
     }
-    curwin->w_cursor = s->search_start;  // -V519
+    curwin->w_cursor = s->search_start;
   }
   restore_viewstate(curwin, &s->old_viewstate);
   highlight_match = false;
@@ -715,12 +704,8 @@ static uint8_t *command_line_enter(int firstc, int count, int indent, bool clear
   ExpandInit(&s->xpc);
   ccline.xpc = &s->xpc;
 
-  if (curwin->w_p_rl && *curwin->w_p_rlc == 's'
-      && (s->firstc == '/' || s->firstc == '?')) {
-    cmdmsg_rl = true;
-  } else {
-    cmdmsg_rl = false;
-  }
+  cmdmsg_rl = (curwin->w_p_rl && *curwin->w_p_rlc == 's'
+               && (s->firstc == '/' || s->firstc == '?'));
 
   msg_grid_validate();
 
@@ -1415,7 +1400,6 @@ static int may_do_command_line_next_incsearch(int firstc, int count, incsearch_s
   pos_T t;
   char *pat;
   int search_flags = SEARCH_NOOF;
-  char save;
 
   if (search_delim == ccline.cmdbuff[skiplen]) {
     pat = last_search_pattern();
@@ -1444,7 +1428,7 @@ static int may_do_command_line_next_incsearch(int firstc, int count, incsearch_s
     search_flags += SEARCH_KEEP;
   }
   emsg_off++;
-  save = pat[patlen];
+  char save = pat[patlen];
   pat[patlen] = NUL;
   int found = searchit(curwin, curbuf, &t, NULL,
                        next_match ? FORWARD : BACKWARD,
@@ -1564,11 +1548,7 @@ static int command_line_erase_chars(CommandLineState *s)
 
     XFREE_CLEAR(ccline.cmdbuff);        // no commandline to return
     if (!cmd_silent && !ui_has(kUICmdline)) {
-      if (cmdmsg_rl) {
-        msg_col = Columns;
-      } else {
-        msg_col = 0;
-      }
+      msg_col = 0;
       msg_putchar(' ');                             // delete ':'
     }
     s->is_state.search_start = s->is_state.save_cursor;
@@ -2664,7 +2644,7 @@ static int command_line_changed(CommandLineState *s)
     }
   }
 
-  if (cmdmsg_rl || (p_arshape && !p_tbidi)) {
+  if (p_arshape && !p_tbidi) {
     // Always redraw the whole command line to fix shaping and
     // right-left typing.  Not efficient, but it works.
     // Do it only when there are no characters left to read
@@ -2755,7 +2735,7 @@ char *getcmdline_prompt(const int firstc, const char *const prompt, const int at
   int msg_silent_saved = msg_silent;
   msg_silent = 0;
 
-  char *const ret = (char *)command_line_enter(firstc, 1L, 0, false);
+  char *const ret = (char *)command_line_enter(firstc, 1, 0, false);
 
   if (did_save_ccline) {
     restore_cmdline(&save_ccline);
@@ -2955,7 +2935,7 @@ char *getexline(int c, void *cookie, int indent, bool do_concat)
     (void)vgetc();
   }
 
-  return getcmdline(c, 1L, indent, do_concat);
+  return getcmdline(c, 1, indent, do_concat);
 }
 
 bool cmdline_overstrike(void)
@@ -3394,7 +3374,7 @@ void ui_ext_cmdline_block_append(size_t indent, const char *line)
 {
   char *buf = xmallocz(indent + strlen(line));
   memset(buf, ' ', indent);
-  memcpy(buf + indent, line, strlen(line));  // -V575
+  memcpy(buf + indent, line, strlen(line));
 
   Array item = ARRAY_DICT_INIT;
   ADD(item, INTEGER_OBJ(0));
@@ -3863,18 +3843,10 @@ void cursorcmd(void)
     return;
   }
 
-  if (cmdmsg_rl) {
-    msg_row = cmdline_row + (ccline.cmdspos / (Columns - 1));
-    msg_col = Columns - (ccline.cmdspos % (Columns - 1)) - 1;
-    if (msg_row <= 0) {
-      msg_row = Rows - 1;
-    }
-  } else {
-    msg_row = cmdline_row + (ccline.cmdspos / Columns);
-    msg_col = ccline.cmdspos % Columns;
-    if (msg_row >= Rows) {
-      msg_row = Rows - 1;
-    }
+  msg_row = cmdline_row + (ccline.cmdspos / Columns);
+  msg_col = ccline.cmdspos % Columns;
+  if (msg_row >= Rows) {
+    msg_row = Rows - 1;
   }
 
   msg_cursor_goto(msg_row, msg_col);
@@ -3886,11 +3858,7 @@ void gotocmdline(bool clr)
     return;
   }
   msg_start();
-  if (cmdmsg_rl) {
-    msg_col = Columns - 1;
-  } else {
-    msg_col = 0;  // always start in column 0
-  }
+  msg_col = 0;  // always start in column 0
   if (clr) {  // clear the bottom line(s)
     msg_clr_eos();  // will reset clear_cmdline
   }
@@ -3994,11 +3962,9 @@ void escape_fname(char **pp)
 /// If 'orig_pat' starts with "~/", replace the home directory with "~".
 void tilde_replace(char *orig_pat, int num_files, char **files)
 {
-  char *p;
-
   if (orig_pat[0] == '~' && vim_ispathsep(orig_pat[1])) {
     for (int i = 0; i < num_files; i++) {
-      p = home_replace_save(NULL, files[i]);
+      char *p = home_replace_save(NULL, files[i]);
       xfree(files[i]);
       files[i] = p;
     }
@@ -4391,7 +4357,7 @@ static int open_cmdwin(void)
           i = 0;
         }
         if (get_histentry(histtype)[i].hisstr != NULL) {
-          ml_append(lnum++, get_histentry(histtype)[i].hisstr, (colnr_T)0, false);
+          ml_append(lnum++, get_histentry(histtype)[i].hisstr, 0, false);
         }
       } while (i != *get_hisidx(histtype));
     }

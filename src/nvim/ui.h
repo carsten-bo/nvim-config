@@ -1,5 +1,4 @@
-#ifndef NVIM_UI_H
-#define NVIM_UI_H
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -105,7 +104,8 @@ struct ui_t {
 
   // TUI fields.
   char *term_name;
-  char *term_background;
+  char *term_background;  ///< Deprecated. No longer needed since background color detection happens
+                          ///< in Lua. To be removed in a future release.
   int term_colors;
   bool stdin_tty;
   bool stdout_tty;
@@ -127,4 +127,3 @@ typedef struct ui_event_callback {
 // uncrustify:on
 
 EXTERN MultiQueue *resize_events;
-#endif  // NVIM_UI_H

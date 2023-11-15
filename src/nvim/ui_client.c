@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 /// Nvim's own UI client, which attaches to a child or remote Nvim server.
 
 #include <stdbool.h>
@@ -87,10 +84,7 @@ void ui_client_attach(int width, int height, char *term)
   if (term) {
     PUT_C(opts, "term_name", CSTR_AS_OBJ(term));
   }
-  if (ui_client_bg_response != kNone) {
-    bool is_dark = (ui_client_bg_response == kTrue);
-    PUT_C(opts, "term_background", CSTR_AS_OBJ(is_dark ? "dark" : "light"));
-  }
+
   PUT_C(opts, "term_colors", INTEGER_OBJ(t_colors));
   if (!ui_client_is_remote) {
     PUT_C(opts, "stdin_tty", BOOLEAN_OBJ(stdin_isatty));

@@ -47,7 +47,6 @@ Defaults					            *nvim-defaults*
 - 'encoding' is UTF-8 (cf. 'fileencoding' for file-content encoding)
 - 'fillchars' defaults (in effect) to "vert:│,fold:·,foldsep:│"
 - 'formatoptions' defaults to "tcqj"
-- 'fsync' is disabled
 - 'hidden' is enabled
 - 'history' defaults to 10000 (the maximum)
 - 'hlsearch' is enabled
@@ -550,10 +549,6 @@ Vimscript compatibility:
   `shell_error` does not alias to |v:shell_error|
   `this_session` does not alias to |v:this_session|
 
-UI/Display:
-  'statusline' always uses the "stl" and "stlnc" fields of 'fillchars', even
-  if they are the same and |hl-StatusLine| and |hl-StatusLineNC| are equal.
-
 Working directory (Vim implemented some of these after Nvim):
 - |DirChanged| and |DirChangedPre| can be triggered when switching to another
   window or tab.
@@ -567,6 +562,8 @@ Working directory (Vim implemented some of these after Nvim):
 Autocommands:
 - Fixed inconsistent behavior in execution of nested autocommands:
   https://github.com/neovim/neovim/issues/23368
+- |TermResponse| is fired for any OSC sequence received from the terminal,
+  instead of the Primary Device Attributes response. |v:termresponse|
 
 ==============================================================================
 Missing features					 *nvim-missing*

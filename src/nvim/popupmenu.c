@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 /// @file popupmenu.c
 ///
 /// Popup menu (PUM)
@@ -423,7 +420,6 @@ void pum_redraw(void)
   int row = 0;
   int attr_scroll = win_hl_attr(curwin, HLF_PSB);
   int attr_thumb = win_hl_attr(curwin, HLF_PST);
-  int i;
   char *s;
   char *p = NULL;
   int width;
@@ -502,7 +498,7 @@ void pum_redraw(void)
                 / (pum_size - pum_height);
   }
 
-  for (i = 0; i < pum_height; i++) {
+  for (int i = 0; i < pum_height; i++) {
     int idx = i + pum_first;
     const int *const attrs = (idx == pum_selected) ? attrsSel : attrsNorm;
     int attr = attrs[0];  // start with "word" highlight
@@ -762,7 +758,7 @@ static bool pum_set_selected(int n, int repeat)
             && (curbuf->b_p_bh[0] == 'w')) {
           // Already a "wipeout" buffer, make it empty.
           while (!buf_is_empty(curbuf)) {
-            ml_delete((linenr_T)1, false);
+            ml_delete(1, false);
           }
         } else {
           // Don't want to sync undo in the current buffer.

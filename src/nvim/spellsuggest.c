@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // spellsuggest.c: functions for spelling suggestions
 
 #include <assert.h>
@@ -234,7 +231,7 @@ enum {
   PFD_NOTSPECIAL = 0xfd,  // highest value that's not special
 };
 
-static long spell_suggest_timeout = 5000;
+static int spell_suggest_timeout = 5000;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "spellsuggest.c.generated.h"
@@ -537,22 +534,18 @@ void spell_suggest(int count)
   } else {
     // When 'rightleft' is set the list is drawn right-left.
     cmdmsg_rl = curwin->w_p_rl;
-    if (cmdmsg_rl) {
-      msg_col = Columns - 1;
-    }
 
     // List the suggestions.
     msg_start();
     msg_row = Rows - 1;         // for when 'cmdheight' > 1
     lines_left = Rows;          // avoid more prompt
-    vim_snprintf(IObuff, IOSIZE, _("Change \"%.*s\" to:"),
-                 sug.su_badlen, sug.su_badptr);
-    if (cmdmsg_rl && strncmp(IObuff, "Change", 6) == 0) {
+    char *fmt = _("Change \"%.*s\" to:");
+    if (cmdmsg_rl && strncmp(fmt, "Change", 6) == 0) {
       // And now the rabbit from the high hat: Avoid showing the
       // untranslated message rightleft.
-      vim_snprintf(IObuff, IOSIZE, ":ot \"%.*s\" egnahC",
-                   sug.su_badlen, sug.su_badptr);
+      fmt = ":ot \"%.*s\" egnahC";
     }
+    vim_snprintf(IObuff, IOSIZE, fmt, sug.su_badlen, sug.su_badptr);
     msg_puts(IObuff);
     msg_clr_eos();
     msg_putchar('\n');
@@ -570,7 +563,7 @@ void spell_suggest(int count)
       }
       vim_snprintf(IObuff, IOSIZE, "%2d", i + 1);
       if (cmdmsg_rl) {
-        rl_mirror_ascii(IObuff);
+        rl_mirror_ascii(IObuff, NULL);
       }
       msg_puts(IObuff);
 
@@ -596,7 +589,7 @@ void spell_suggest(int count)
         }
         if (cmdmsg_rl) {
           // Mirror the numbers, but keep the leading space.
-          rl_mirror_ascii(IObuff + 1);
+          rl_mirror_ascii(IObuff + 1, NULL);
         }
         msg_advance(30);
         msg_puts(IObuff);
@@ -810,7 +803,7 @@ static void spell_find_suggest(char *badptr, int badlen, suginfo_T *su, int maxc
       spell_suggest_file(su, buf + 5);
     } else if (strncmp(buf, "timeout:", 8) == 0) {
       // Limit the time searching for suggestions.
-      spell_suggest_timeout = atol(buf + 8);
+      spell_suggest_timeout = atoi(buf + 8);
     } else if (!did_intern) {
       // Use internal method once.
       spell_suggest_intern(su, interactive);
@@ -1177,7 +1170,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char *fword, bool soun
   // word).
   int depth = 0;
   trystate_T *sp = &stack[0];
-  CLEAR_POINTER(sp);  // -V1086
+  CLEAR_POINTER(sp);
   sp->ts_curi = 1;
 
   if (soundfold) {
@@ -3150,7 +3143,7 @@ static void add_suggestion(suginfo_T *su, garray_T *gap, const char *goodword, i
   if (i < 0) {
     // Add a suggestion.
     stp = GA_APPEND_VIA_PTR(suggest_T, gap);
-    stp->st_word = xstrnsave(goodword, (size_t)goodlen);
+    stp->st_word = xmemdupz(goodword, (size_t)goodlen);
     stp->st_wordlen = goodlen;
     stp->st_score = score;
     stp->st_altscore = altscore;

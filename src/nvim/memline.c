@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 // for debugging
 // #define CHECK(c, s) do { if (c) emsg(s); } while (0)
 #define CHECK(c, s) do {} while (0)
@@ -162,9 +159,9 @@ enum {
 // This won't detect a 64 bit machine that only swaps a byte in the top 32
 // bits, but that is crazy anyway.
 enum {
-  B0_MAGIC_LONG = 0x30313233L,
-  B0_MAGIC_INT = 0x20212223L,
-  B0_MAGIC_SHORT = 0x10111213L,
+  B0_MAGIC_LONG = 0x30313233,
+  B0_MAGIC_INT = 0x20212223,
+  B0_MAGIC_SHORT = 0x10111213,
   B0_MAGIC_CHAR = 0x55,
 };
 
@@ -615,7 +612,7 @@ static bool ml_check_b0_strings(ZeroBlock *b0p)
   return (memchr(b0p->b0_version, NUL, 10)
           && memchr(b0p->b0_uname, NUL, B0_UNAME_SIZE)
           && memchr(b0p->b0_hname, NUL, B0_HNAME_SIZE)
-          && memchr(b0p->b0_fname, NUL, B0_FNAME_SIZE_CRYPT));  // -V1086
+          && memchr(b0p->b0_fname, NUL, B0_FNAME_SIZE_CRYPT));
 }
 
 /// Update the timestamp or the B0_SAME_DIR flag of the .swp file.
@@ -677,8 +674,8 @@ static void set_b0_fname(ZeroBlock *b0p, buf_T *buf)
       buf->b_mtime_read = buf->b_mtime;
       buf->b_mtime_read_ns = buf->b_mtime_ns;
     } else {
-      long_to_char(0L, b0p->b0_mtime);
-      long_to_char(0L, b0p->b0_ino);
+      long_to_char(0, b0p->b0_mtime);
+      long_to_char(0, b0p->b0_ino);
       buf->b_mtime = 0;
       buf->b_mtime_ns = 0;
       buf->b_mtime_read = 0;
@@ -895,7 +892,7 @@ void ml_recover(bool checkext)
       goto theend;
     }
     off_T size;
-    if ((size = vim_lseek(mfp->mf_fd, (off_T)0L, SEEK_END)) <= 0) {
+    if ((size = vim_lseek(mfp->mf_fd, 0, SEEK_END)) <= 0) {
       mfp->mf_blocknr_max = 0;              // no file or empty file
     } else {
       mfp->mf_blocknr_max = size / mfp->mf_page_size;
@@ -932,7 +929,7 @@ void ml_recover(bool checkext)
   // check date of swapfile and original file
   FileInfo org_file_info;
   FileInfo swp_file_info;
-  long mtime = char_to_long(b0p->b0_mtime);
+  int mtime = (int)char_to_long(b0p->b0_mtime);
   if (curbuf->b_ffname != NULL
       && os_fileinfo(curbuf->b_ffname, &org_file_info)
       && ((os_fileinfo(mfp->mf_fname, &swp_file_info)
@@ -983,10 +980,10 @@ void ml_recover(bool checkext)
   linenr_T lnum = 0;        // append after line 0 in curbuf
   linenr_T line_count = 0;
   int idx = 0;              // start with first index in block 1
-  long error = 0;
-  buf->b_ml.ml_stack_top = 0;  // -V1048
+  int error = 0;
+  buf->b_ml.ml_stack_top = 0;
   buf->b_ml.ml_stack = NULL;
-  buf->b_ml.ml_stack_size = 0;  // -V1048
+  buf->b_ml.ml_stack_size = 0;
 
   bool cannot_open = (curbuf->b_ffname == NULL);
 
@@ -1002,8 +999,7 @@ void ml_recover(bool checkext)
         goto theend;
       }
       error++;
-      ml_append(lnum++, _("???MANY LINES MISSING"),
-                (colnr_T)0, true);
+      ml_append(lnum++, _("???MANY LINES MISSING"), 0, true);
     } else {          // there is a block
       pp = hp->bh_data;
       if (pp->pb_id == PTR_ID) {                // it is a pointer block
@@ -1027,14 +1023,12 @@ void ml_recover(bool checkext)
           }
           if (line_count != 0) {
             error++;
-            ml_append(lnum++, _("???LINE COUNT WRONG"),
-                      (colnr_T)0, true);
+            ml_append(lnum++, _("???LINE COUNT WRONG"), 0, true);
           }
         }
 
         if (pp->pb_count == 0) {
-          ml_append(lnum++, _("???EMPTY BLOCK"),
-                    (colnr_T)0, true);
+          ml_append(lnum++, _("???EMPTY BLOCK"), 0, true);
           error++;
         } else if (idx < (int)pp->pb_count) {         // go a block deeper
           if (pp->pb_pointer[idx].pe_bnum < 0) {
@@ -1053,8 +1047,7 @@ void ml_recover(bool checkext)
             }
             if (cannot_open) {
               error++;
-              ml_append(lnum++, _("???LINES MISSING"),
-                        (colnr_T)0, true);
+              ml_append(lnum++, _("???LINES MISSING"), 0, true);
             }
             idx++;                  // get same block again for next index
             continue;
@@ -1081,8 +1074,7 @@ void ml_recover(bool checkext)
             goto theend;
           }
           error++;
-          ml_append(lnum++, _("???BLOCK MISSING"),
-                    (colnr_T)0, true);
+          ml_append(lnum++, _("???BLOCK MISSING"), 0, true);
         } else {
           // It is a data block.
           // Append all the lines in this block.
@@ -1093,7 +1085,7 @@ void ml_recover(bool checkext)
           if (page_count * mfp->mf_page_size != dp->db_txt_end) {
             ml_append(lnum++,
                       _("??? from here until ???END lines" " may be messed up"),
-                      (colnr_T)0, true);
+                      0, true);
             error++;
             has_error = true;
             dp->db_txt_end = page_count * mfp->mf_page_size;
@@ -1109,7 +1101,7 @@ void ml_recover(bool checkext)
             ml_append(lnum++,
                       _("??? from here until ???END lines"
                         " may have been inserted/deleted"),
-                      (colnr_T)0, true);
+                      0, true);
             error++;
             has_error = true;
           }
@@ -1119,7 +1111,7 @@ void ml_recover(bool checkext)
             if ((char *)&(dp->db_index[i]) >= (char *)dp + dp->db_txt_start) {
               // line count must be wrong
               error++;
-              ml_append(lnum++, _("??? lines may be missing"), (colnr_T)0, true);
+              ml_append(lnum++, _("??? lines may be missing"), 0, true);
               break;
             }
 
@@ -1137,10 +1129,10 @@ void ml_recover(bool checkext)
               did_questions = false;
               p = (char *)dp + txt_start;
             }
-            ml_append(lnum++, p, (colnr_T)0, true);
+            ml_append(lnum++, p, 0, true);
           }
           if (has_error) {
-            ml_append(lnum++, _("???END"), (colnr_T)0, true);
+            ml_append(lnum++, _("???END"), 0, true);
           }
         }
       }
@@ -1565,7 +1557,7 @@ static time_t swapfile_info(char *fname)
           msg_outtrans(b0.b0_hname, 0);
         }
 
-        if (char_to_long(b0.b0_pid) != 0L) {
+        if (char_to_long(b0.b0_pid) != 0) {
           msg_puts(_("\n        process ID: "));
           msg_outnum((int)char_to_long(b0.b0_pid));
           if ((process_running = swapfile_process_running(&b0, fname))) {
@@ -1636,7 +1628,7 @@ static bool swapfile_unchanged(char *fname)
   }
 
   // process must be known and not running.
-  if (char_to_long(b0.b0_pid) == 0L || swapfile_process_running(&b0, fname)) {
+  if (char_to_long(b0.b0_pid) == 0 || swapfile_process_running(&b0, fname)) {
     ret = false;
   }
 

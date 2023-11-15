@@ -1,6 +1,3 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check
-// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-
 /// @file digraph.c
 ///
 /// code for digraphs
@@ -1624,7 +1621,7 @@ int digraph_get(int char1, int char2, bool meta_char)
 
   if (((retval = getexactdigraph(char1, char2, meta_char)) == char2)
       && (char1 != char2)
-      && ((retval = getexactdigraph(char2, char1, meta_char))  // -V764
+      && ((retval = getexactdigraph(char2, char1, meta_char))
           == char1)) {
     return char2;
   }
@@ -2077,8 +2074,6 @@ char *keymap_init(void)
 /// @param eap
 void ex_loadkeymap(exarg_T *eap)
 {
-  char *s;
-
 #define KMAP_LLEN 200  // max length of "to" and "from" together
   char buf[KMAP_LLEN + 11];
   char *save_cpo = p_cpo;
@@ -2109,11 +2104,11 @@ void ex_loadkeymap(exarg_T *eap)
 
     if ((*p != '"') && (*p != NUL)) {
       kmap_T *kp = GA_APPEND_VIA_PTR(kmap_T, &curbuf->b_kmap_ga);
-      s = skiptowhite(p);
-      kp->from = xstrnsave(p, (size_t)(s - p));
+      char *s = skiptowhite(p);
+      kp->from = xmemdupz(p, (size_t)(s - p));
       p = skipwhite(s);
       s = skiptowhite(p);
-      kp->to = xstrnsave(p, (size_t)(s - p));
+      kp->to = xmemdupz(p, (size_t)(s - p));
 
       if ((strlen(kp->from) + strlen(kp->to) >= KMAP_LLEN)
           || (*kp->from == NUL)

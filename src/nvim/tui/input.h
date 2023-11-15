@@ -1,5 +1,4 @@
-#ifndef NVIM_TUI_INPUT_H
-#define NVIM_TUI_INPUT_H
+#pragma once
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -25,7 +24,6 @@ typedef struct term_input {
   // Phases: -1=all 0=disabled 1=first-chunk 2=continue 3=last-chunk
   int8_t paste;
   bool ttimeout;
-  int8_t waiting_for_bg_response;
   int8_t waiting_for_csiu_response;
   ExtkeysType extkeys_type;
   OptInt ttimeoutlen;
@@ -47,5 +45,3 @@ typedef enum {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "tui/input.h.generated.h"
 #endif
-
-#endif  // NVIM_TUI_INPUT_H
