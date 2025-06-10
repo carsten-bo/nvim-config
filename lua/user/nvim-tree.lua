@@ -3,13 +3,6 @@ if not status_ok then
   return
 end
 
-local config_status_ok, nvim_tree_config = pcall(require, "nvim-tree.config")
-if not config_status_ok then
-  return
-end
-
-local tree_cb = nvim_tree_config.nvim_tree_callback
-
 nvim_tree.setup {
   update_focused_file = {
     enable = true,
@@ -21,7 +14,9 @@ nvim_tree.setup {
     timeout = 500,
   },
   renderer = {
-    root_folder_modifier = ":t",
+    -- root_folder_label = function(path)
+    --   return vim.fn.fnamemodify(path, ":t")
+    -- end,
     icons = {
       glyphs = {
         default = "",
@@ -64,10 +59,11 @@ nvim_tree.setup {
     side = "left",
     mappings = {
       list = {
-        { key = { "l", "<CR>", "o" }, cb = tree_cb "edit" },
-        { key = "h", cb = tree_cb "close_node" },
-        { key = "v", cb = tree_cb "vsplit" },
+        { key = { "l", "<CR>", "o" }, action = "edit" },
+        { key = "h", action = "close_node" },
+        { key = "v", action = "vsplit" },
       },
     },
   },
 }
+
